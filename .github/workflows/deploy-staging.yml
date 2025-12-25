@@ -30,7 +30,7 @@ jobs:
       - name: Build Project
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          NEXTAUTH_URL: https://todo-app-staging.vercel.app
+          NEXTAUTH_URL: https://todo-app-staging-silk.vercel.app
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
 
       - name: Deploy to Staging
