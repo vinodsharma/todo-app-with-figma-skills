@@ -37,9 +37,7 @@ docs/
 Thumbs.db
 
 # Docker
-Dockerfile
-docker-compose.yml
-.dockerignore
+# (Dockerfile, docker-compose.yml, and .dockerignore are not part of build context)
 
 # Testing
 coverage
