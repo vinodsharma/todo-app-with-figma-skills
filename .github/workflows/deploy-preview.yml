@@ -37,6 +37,8 @@ jobs:
         env:
           NEXTAUTH_URL: https://todo-app-preview.vercel.app
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          PRISMA_DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.PREVIEW_DIRECT_URL }}
 
       - name: Deploy Preview
         id: deploy

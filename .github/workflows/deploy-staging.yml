@@ -30,8 +30,10 @@ jobs:
       - name: Build Project
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          NEXTAUTH_URL: https://todo-app-staging.vercel.app
+          NEXTAUTH_URL: https://todo-app-staging-silk.vercel.app
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          PRISMA_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.STAGING_DIRECT_URL }}
 
       - name: Deploy to Staging
         id: deploy
