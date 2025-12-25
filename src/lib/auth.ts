@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
+  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -19,35 +19,40 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Invalid credentials');
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
+
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+          });
+
+          if (!user || !user.password) {
+            return null;
+          }
+
+          const isCorrectPassword = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isCorrectPassword) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          };
+        } catch (error) {
+          console.error('Auth error:', error);
+          return null;
         }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        });
-
-        if (!user || !user.password) {
-          throw new Error('Invalid credentials');
-        }
-
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isCorrectPassword) {
-          throw new Error('Invalid credentials');
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-        };
       },
     }),
   ],
@@ -65,7 +70,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
         session.user.id = token.id as string;
       }
       return session;
