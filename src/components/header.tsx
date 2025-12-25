@@ -35,7 +35,7 @@ export function Header() {
 
   return (
     <header className="border-b bg-background">
-      <div className="container flex h-16 items-center justify-between px-4">
+      <div className="flex h-16 items-center justify-between px-6">
         <h1 className="text-xl font-semibold">Todo App</h1>
 
         {session?.user && (
