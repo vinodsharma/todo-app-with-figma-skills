@@ -1,0 +1,121 @@
+"use client";
+
+import { useMemo } from "react";
+import { Todo } from "@/types";
+import { TodoItem } from "@/components/todo-item";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CheckCircle2, Circle, ListTodo } from "lucide-react";
+
+interface TodoListProps {
+  todos: Todo[];
+  isLoading: boolean;
+  onToggle: (id: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}
+
+function TodoListSkeleton() {
+  return (
+    <div className="space-y-2">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="flex items-start gap-3 rounded-lg border border-border bg-card p-4"
+        >
+          <Skeleton className="h-5 w-5 shrink-0 rounded" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-3/4" />
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="mb-4 rounded-full bg-muted p-4">
+        <ListTodo className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="mb-1 text-lg font-medium">No todos yet</h3>
+      <p className="text-sm text-muted-foreground">
+        Create your first todo to get started
+      </p>
+    </div>
+  );
+}
+
+export function TodoList({
+  todos,
+  isLoading,
+  onToggle,
+  onDelete,
+}: TodoListProps) {
+  const { activeTodos, completedTodos } = useMemo(() => {
+    return {
+      activeTodos: todos.filter((todo) => !todo.completed),
+      completedTodos: todos.filter((todo) => todo.completed),
+    };
+  }, [todos]);
+
+  if (isLoading) {
+    return <TodoListSkeleton />;
+  }
+
+  if (todos.length === 0) {
+    return <EmptyState />;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Active Todos Section */}
+      {activeTodos.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Circle className="h-4 w-4" />
+            <span>Active</span>
+            <span className="text-muted-foreground">
+              ({activeTodos.length})
+            </span>
+          </div>
+          <div className="space-y-2">
+            {activeTodos.map((todo) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                onToggle={onToggle}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Completed Todos Section */}
+      {completedTodos.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>Completed</span>
+            <span>({completedTodos.length})</span>
+          </div>
+          <div className="space-y-2">
+            {completedTodos.map((todo) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                onToggle={onToggle}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

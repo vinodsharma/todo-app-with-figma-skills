@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -13,7 +13,7 @@ export async function DELETE(
   }
 
   try {
-    const categoryId = params.id;
+    const { id: categoryId } = await params;
 
     // Verify category exists and belongs to current user
     const existingCategory = await prisma.category.findFirst({
