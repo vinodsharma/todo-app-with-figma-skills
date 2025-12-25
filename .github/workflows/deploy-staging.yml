@@ -41,3 +41,9 @@ jobs:
 
       - name: Alias to Staging Domain
         run: vercel alias ${{ steps.deploy.outputs.url }} staging-todo-app.vercel.app --token=${{ secrets.VERCEL_TOKEN }} || true
+
+      - name: Run Database Migrations
+        run: npx prisma migrate deploy
+        env:
+          PRISMA_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.STAGING_DIRECT_URL }}
