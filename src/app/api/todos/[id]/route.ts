@@ -6,7 +6,7 @@ import { Priority } from '@prisma/client';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -14,7 +14,7 @@ export async function PATCH(
   }
 
   try {
-    const todoId = params.id;
+    const { id: todoId } = await params;
 
     // Verify todo exists and belongs to current user
     const existingTodo = await prisma.todo.findFirst({
@@ -106,7 +106,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -114,7 +114,7 @@ export async function DELETE(
   }
 
   try {
-    const todoId = params.id;
+    const { id: todoId } = await params;
 
     // Verify todo exists and belongs to current user
     const existingTodo = await prisma.todo.findFirst({

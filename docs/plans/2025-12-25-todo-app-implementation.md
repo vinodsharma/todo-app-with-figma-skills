@@ -14,11 +14,11 @@
 
 | Milestone | Status | Tasks |
 |-----------|--------|-------|
-| 1. Project Setup | [ ] | 1-6 |
-| 2. Authentication | [ ] | 7-12 |
-| 3. Core API | [ ] | 13-18 |
-| 4. UI Components | [ ] | 19-24 |
-| 5. Integration & E2E Testing | [ ] | 25-28 |
+| 1. Project Setup | [x] | 1-6 |
+| 2. Authentication | [x] | 7-12 |
+| 3. Core API | [x] | 13-18 |
+| 4. UI Components | [x] | 19-24 |
+| 5. Integration & E2E Testing | [x] | 25-28 |
 
 ---
 
@@ -163,16 +163,16 @@ Full user journey: register → create categories → create todos → toggle/de
 
 ## Completion Checklist
 
-- [ ] Docker Compose runs successfully
-- [ ] User can register with email/password
-- [ ] User can sign in with email/password
+- [x] Docker Compose runs successfully
+- [x] User can register with email/password
+- [x] User can sign in with email/password
 - [ ] User can sign in with Google (if configured)
-- [ ] Unauthenticated users redirected to login
-- [ ] User can create todos with title, priority, due date, category
-- [ ] User can toggle todo completion
-- [ ] User can delete todos
-- [ ] User can create categories with name and color
-- [ ] User can filter todos by category
-- [ ] User can delete categories
-- [ ] All data persists after sign out/in
-- [ ] UI tested with Playwright MCP
+- [x] Unauthenticated users redirected to login
+- [x] User can create todos with title, priority, due date, category
+- [x] User can toggle todo completion
+- [x] User can delete todos
+- [x] User can create categories with name and color
+- [x] User can filter todos by category
+- [x] User can delete categories
+- [x] All data persists after sign out/in
+- [x] UI tested with Playwright MCP
