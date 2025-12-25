@@ -32,6 +32,8 @@ jobs:
         env:
           NEXTAUTH_URL: https://todo-app-staging-silk.vercel.app
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          PRISMA_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.STAGING_DIRECT_URL }}
 
       - name: Deploy to Staging
         id: deploy
