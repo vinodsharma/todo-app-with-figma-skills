@@ -9,6 +9,10 @@ on:
       - 'feat/**'
   pull_request:
     types: [opened, synchronize, reopened]
+    branches-ignore:
+      - main
+      - master
+      - staging
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
