@@ -18,7 +18,7 @@ COPY . .
 
 # Generate Prisma Client (will be needed when Prisma is added)
 # This will fail gracefully if schema.prisma doesn't exist yet
-RUN npx prisma generate || echo "Prisma schema not found, skipping generation"
+RUN if [ -f prisma/schema.prisma ]; then npx prisma generate; fi
 
 # Expose port 3000
 EXPOSE 3000
