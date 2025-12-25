@@ -1,0 +1,161 @@
+'use client';
+
+import { useState } from 'react';
+import { CalendarIcon, Plus } from 'lucide-react';
+import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Category, CreateTodoInput, Priority } from '@/types';
+import { cn } from '@/lib/utils';
+
+interface TodoFormProps {
+  categories: Category[];
+  selectedCategoryId?: string;
+  onSubmit: (todo: CreateTodoInput) => Promise<void>;
+}
+
+export function TodoForm({
+  categories,
+  selectedCategoryId,
+  onSubmit,
+}: TodoFormProps) {
+  const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState<Priority>(Priority.MEDIUM);
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [categoryId, setCategoryId] = useState<string | undefined>(
+    selectedCategoryId
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!title.trim()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await onSubmit({
+        title: title.trim(),
+        priority,
+        dueDate: dueDate ? dueDate.toISOString() : undefined,
+        categoryId: categoryId || undefined,
+      });
+
+      // Clear form after successful submission
+      setTitle('');
+      setPriority(Priority.MEDIUM);
+      setDueDate(undefined);
+      setCategoryId(selectedCategoryId);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <Input
+          type="text"
+          placeholder="Add a new todo..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          disabled={isLoading}
+          required
+          className="flex-1"
+        />
+
+        <div className="flex gap-2">
+          <Select
+            value={priority}
+            onValueChange={(value) => setPriority(value as Priority)}
+            disabled={isLoading}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={Priority.LOW}>Low</SelectItem>
+              <SelectItem value={Priority.MEDIUM}>Medium</SelectItem>
+              <SelectItem value={Priority.HIGH}>High</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isLoading}
+                className={cn(
+                  'w-[140px] justify-start text-left font-normal',
+                  !dueDate && 'text-muted-foreground'
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dueDate ? format(dueDate, 'MMM dd, yyyy') : 'Due date'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dueDate}
+                onSelect={(date) => {
+                  setDueDate(date);
+                  setIsCalendarOpen(false);
+                }}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+
+          {categories.length > 0 && (
+            <Select
+              value={categoryId}
+              onValueChange={setCategoryId}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Button type="submit" disabled={isLoading || !title.trim()}>
+            <Plus className="h-4 w-4 mr-1" />
+            Add
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}
