@@ -29,6 +29,8 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/todoapp}
+      - PRISMA_DATABASE_URL=${PRISMA_DATABASE_URL:-postgresql://postgres:postgres@db:5432/todoapp}
+      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres:postgres@db:5432/todoapp}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
