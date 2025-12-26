@@ -17,7 +17,7 @@ export default function Home() {
   const handleAddCategory = async (name: string, color: string) => {
     await createCategoryHook({ name, color });
   };
-  const { todos, isLoading, createTodo, toggleTodo, deleteTodo } = useTodos();
+  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo } = useTodos();
 
   // Wrap todo operations to also refetch categories (to update counts)
   const handleCreateTodo = async (input: Parameters<typeof createTodo>[0]) => {
@@ -31,6 +31,11 @@ export default function Home() {
 
   const handleDeleteTodo = async (id: string) => {
     await deleteTodo(id);
+    await refetchCategories();
+  };
+
+  const handleEditTodo = async (id: string, input: Parameters<typeof updateTodo>[1]) => {
+    await updateTodo(id, input);
     await refetchCategories();
   };
 
@@ -61,8 +66,10 @@ export default function Home() {
           />
           <TodoList
             todos={filteredTodos}
+            categories={categories}
             isLoading={isLoading}
             onToggle={handleToggleTodo}
+            onEdit={handleEditTodo}
             onDelete={handleDeleteTodo}
           />
         </main>
