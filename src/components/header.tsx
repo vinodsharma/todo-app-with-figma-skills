@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export function Header() {
   const { data: session } = useSession()
@@ -38,7 +39,9 @@ export function Header() {
       <div className="flex h-16 items-center justify-between px-6">
         <h1 className="text-xl font-semibold">Todo App</h1>
 
-        {session?.user && (
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          {session?.user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -63,7 +66,8 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
+          )}
+        </div>
       </div>
     </header>
   )
