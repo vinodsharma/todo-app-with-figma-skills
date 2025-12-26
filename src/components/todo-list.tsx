@@ -1,15 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
-import { Todo } from "@/types";
+import { useMemo, useState } from "react";
+import { Todo, Category, UpdateTodoInput } from "@/types";
 import { TodoItem } from "@/components/todo-item";
+import { EditTodoDialog } from "@/components/edit-todo-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, Circle, ListTodo } from "lucide-react";
 
 interface TodoListProps {
   todos: Todo[];
+  categories: Category[];
   isLoading: boolean;
   onToggle: (id: string) => Promise<void>;
+  onEdit: (id: string, input: UpdateTodoInput) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -52,16 +55,29 @@ function EmptyState() {
 
 export function TodoList({
   todos,
+  categories,
   isLoading,
   onToggle,
+  onEdit,
   onDelete,
 }: TodoListProps) {
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+
   const { activeTodos, completedTodos } = useMemo(() => {
     return {
       activeTodos: todos.filter((todo) => !todo.completed),
       completedTodos: todos.filter((todo) => todo.completed),
     };
   }, [todos]);
+
+  const handleEditClick = (todo: Todo) => {
+    setEditingTodo(todo);
+  };
+
+  const handleEditSave = async (id: string, input: UpdateTodoInput) => {
+    await onEdit(id, input);
+    setEditingTodo(null);
+  };
 
   if (isLoading) {
     return <TodoListSkeleton />;
@@ -89,6 +105,7 @@ export function TodoList({
                 key={todo.id}
                 todo={todo}
                 onToggle={onToggle}
+                onEdit={handleEditClick}
                 onDelete={onDelete}
               />
             ))}
@@ -110,11 +127,23 @@ export function TodoList({
                 key={todo.id}
                 todo={todo}
                 onToggle={onToggle}
+                onEdit={handleEditClick}
                 onDelete={onDelete}
               />
             ))}
           </div>
         </div>
+      )}
+
+      {/* Edit Todo Dialog */}
+      {editingTodo && (
+        <EditTodoDialog
+          todo={editingTodo}
+          categories={categories}
+          open={!!editingTodo}
+          onOpenChange={(open) => !open && setEditingTodo(null)}
+          onSave={handleEditSave}
+        />
       )}
     </div>
   );

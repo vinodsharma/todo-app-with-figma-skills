@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { Calendar, Trash2 } from "lucide-react";
+import { Calendar, Pencil, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { Todo, Priority } from "@/types";
 interface TodoItemProps {
   todo: Todo;
   onToggle: (id: string) => Promise<void>;
+  onEdit: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -30,7 +31,7 @@ const priorityConfig: Record<Priority, { label: string; className: string }> = {
   },
 };
 
-export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
+export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
   const isOverdue =
     todo.dueDate && !todo.completed && new Date(todo.dueDate) < new Date();
 
@@ -54,13 +55,22 @@ export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
             {todo.title}
           </h3>
 
-          <button
-            onClick={() => onDelete(todo.id)}
-            className="shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
-            aria-label={`Delete "${todo.title}"`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          <div className="flex shrink-0 gap-1">
+            <button
+              onClick={() => onEdit(todo)}
+              className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+              aria-label={`Edit "${todo.title}"`}
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onDelete(todo.id)}
+              className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+              aria-label={`Delete "${todo.title}"`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
