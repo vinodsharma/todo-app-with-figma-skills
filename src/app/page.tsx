@@ -11,13 +11,28 @@ import { useCategories } from '@/hooks/use-categories';
 export default function Home() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
-  const { categories, createCategory: createCategoryHook, deleteCategory } = useCategories();
+  const { categories, createCategory: createCategoryHook, deleteCategory, refetch: refetchCategories } = useCategories();
 
   // Wrapper to match component interface (name, color) to hook interface ({ name, color })
   const handleAddCategory = async (name: string, color: string) => {
     await createCategoryHook({ name, color });
   };
   const { todos, isLoading, createTodo, toggleTodo, deleteTodo } = useTodos();
+
+  // Wrap todo operations to also refetch categories (to update counts)
+  const handleCreateTodo = async (input: Parameters<typeof createTodo>[0]) => {
+    await createTodo(input);
+    await refetchCategories();
+  };
+
+  const handleToggleTodo = async (id: string) => {
+    await toggleTodo(id);
+  };
+
+  const handleDeleteTodo = async (id: string) => {
+    await deleteTodo(id);
+    await refetchCategories();
+  };
 
   // Filter todos based on selected category
   const filteredTodos = useMemo(() => {
@@ -42,13 +57,13 @@ export default function Home() {
           <TodoForm
             categories={categories}
             selectedCategoryId={selectedCategoryId || undefined}
-            onSubmit={createTodo}
+            onSubmit={handleCreateTodo}
           />
           <TodoList
             todos={filteredTodos}
             isLoading={isLoading}
-            onToggle={toggleTodo}
-            onDelete={deleteTodo}
+            onToggle={handleToggleTodo}
+            onDelete={handleDeleteTodo}
           />
         </main>
       </div>
