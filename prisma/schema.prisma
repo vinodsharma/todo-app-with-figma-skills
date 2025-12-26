@@ -26,6 +26,7 @@ model User {
   emailVerified DateTime?
   password      String?   // Nullable for OAuth users
   image         String?
+  theme         String    @default("system") // "light" | "dark" | "system"
   accounts      Account[]
   sessions      Session[]
   todos         Todo[]
