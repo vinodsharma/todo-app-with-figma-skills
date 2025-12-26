@@ -1,0 +1,40 @@
+name: Sync Staging After Release
+
+# Triggers when a release is published or when staging is merged to main
+on:
+  release:
+    types: [published]
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  sync-staging:
+    # Only run if:
+    # - A release was published, OR
+    # - A PR from staging was merged to main
+    if: |
+      github.event_name == 'release' ||
+      (github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'staging')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync staging with main
+        run: |
+          git fetch origin main staging
+          git checkout staging
+          git reset --hard origin/main
+          git push --force-with-lease origin staging
+          echo "✅ Staging branch synced with main"
