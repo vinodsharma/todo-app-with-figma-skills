@@ -72,3 +72,18 @@ export interface TodoQueryParams {
   dueDate?: 'overdue' | 'today' | 'week' | 'upcoming';
   categoryId?: string;
 }
+
+// Sort types for todo list
+export type SortField = 'priority' | 'dueDate' | 'createdAt' | 'title';
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortOption {
+  field: SortField;
+  direction: SortDirection;
+}
+
+// Default sort option
+export const DEFAULT_SORT: SortOption = {
+  field: 'createdAt',
+  direction: 'desc',
+};
