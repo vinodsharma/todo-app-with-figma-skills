@@ -32,7 +32,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { title, completed, priority, dueDate, categoryId } = body;
+    const { title, description, completed, priority, dueDate, categoryId } = body;
 
     // Build update data object
     const updateData: any = {};
@@ -45,6 +45,17 @@ export async function PATCH(
         );
       }
       updateData.title = title.trim();
+    }
+
+    if (description !== undefined) {
+      // Validate description length (max 1000 chars)
+      if (description !== null && typeof description === 'string' && description.length > 1000) {
+        return NextResponse.json(
+          { error: 'Description cannot exceed 1000 characters' },
+          { status: 400 }
+        );
+      }
+      updateData.description = description ? description.trim() : null;
     }
 
     if (completed !== undefined) {
