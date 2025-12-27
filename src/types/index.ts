@@ -19,6 +19,7 @@ export interface Category {
 export interface Todo {
   id: string;
   title: string;
+  description: string | null;
   completed: boolean;
   priority: Priority;
   dueDate: string | null;
@@ -32,6 +33,7 @@ export interface Todo {
 // Input types for creating todos
 export interface CreateTodoInput {
   title: string;
+  description?: string;
   priority?: Priority;
   dueDate?: string;
   categoryId?: string;
@@ -40,6 +42,7 @@ export interface CreateTodoInput {
 // Input types for updating todos
 export interface UpdateTodoInput {
   title?: string;
+  description?: string | null;
   completed?: boolean;
   priority?: Priority;
   dueDate?: string;

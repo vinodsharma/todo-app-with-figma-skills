@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -48,6 +49,7 @@ export function EditTodoDialog({
   onSave,
 }: EditTodoDialogProps) {
   const [title, setTitle] = useState(todo.title);
+  const [description, setDescription] = useState(todo.description || '');
   const [priority, setPriority] = useState<Priority>(todo.priority);
   const [dueDate, setDueDate] = useState<Date | undefined>(
     todo.dueDate ? new Date(todo.dueDate) : undefined
@@ -58,10 +60,13 @@ export function EditTodoDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
+  const MAX_DESCRIPTION_LENGTH = 1000;
+
   // Reset form when todo changes or dialog opens
   useEffect(() => {
     if (open) {
       setTitle(todo.title);
+      setDescription(todo.description || '');
       setPriority(todo.priority);
       setDueDate(todo.dueDate ? new Date(todo.dueDate) : undefined);
       setCategoryId(todo.categoryId || NO_CATEGORY);
@@ -76,6 +81,7 @@ export function EditTodoDialog({
     try {
       await onSave(todo.id, {
         title: title.trim(),
+        description: description.trim() || null,
         priority,
         dueDate: dueDate ? dueDate.toISOString() : undefined,
         categoryId: categoryId === NO_CATEGORY ? undefined : categoryId,
@@ -113,6 +119,25 @@ export function EditTodoDialog({
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isLoading}
                 autoFocus
+              />
+            </div>
+
+            {/* Description/Notes */}
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="todo-description">Notes (optional)</Label>
+                <span className={`text-xs ${description.length > MAX_DESCRIPTION_LENGTH ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {description.length}/{MAX_DESCRIPTION_LENGTH}
+                </span>
+              </div>
+              <Textarea
+                id="todo-description"
+                placeholder="Add notes or details..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isLoading}
+                rows={3}
+                className="resize-none"
               />
             </div>
 

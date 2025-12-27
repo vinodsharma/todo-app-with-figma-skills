@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { format } from "date-fns";
-import { Calendar, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -32,8 +33,10 @@ const priorityConfig: Record<Priority, { label: string; className: string }> = {
 };
 
 export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const isOverdue =
     todo.dueDate && !todo.completed && new Date(todo.dueDate) < new Date();
+  const hasDescription = todo.description && todo.description.trim().length > 0;
 
   return (
     <div className="group flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent/50">
@@ -112,7 +115,31 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
               </span>
             </div>
           )}
+
+          {/* Description indicator */}
+          {hasDescription && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
+            >
+              <FileText className="h-3 w-3" />
+              <span>Notes</span>
+              {isExpanded ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+            </button>
+          )}
         </div>
+
+        {/* Description content */}
+        {hasDescription && isExpanded && (
+          <div className="mt-2 rounded-md bg-muted/50 p-3 text-sm text-muted-foreground whitespace-pre-wrap">
+            {todo.description}
+          </div>
+        )}
       </div>
     </div>
   );
