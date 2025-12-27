@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X, Filter, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Priority, StatusFilter, DueDateFilter } from '@/types';
+import { Priority, StatusFilter, DueDateFilter, SortOption, DEFAULT_SORT } from '@/types';
 import { cn } from '@/lib/utils';
 
 // Local filter state for the search bar (without categoryId - that's managed by sidebar)
@@ -24,8 +24,22 @@ export interface SearchBarFilters {
 interface SearchFilterBarProps {
   filters: SearchBarFilters;
   onFiltersChange: (filters: SearchBarFilters) => void;
+  sortOption?: SortOption;
+  onSortChange?: (sort: SortOption) => void;
   className?: string;
 }
+
+// Sort option display configuration
+const SORT_OPTIONS: { value: string; label: string; field: SortOption['field']; direction: SortOption['direction'] }[] = [
+  { value: 'createdAt-desc', label: 'Newest First', field: 'createdAt', direction: 'desc' },
+  { value: 'createdAt-asc', label: 'Oldest First', field: 'createdAt', direction: 'asc' },
+  { value: 'priority-desc', label: 'Priority: High → Low', field: 'priority', direction: 'desc' },
+  { value: 'priority-asc', label: 'Priority: Low → High', field: 'priority', direction: 'asc' },
+  { value: 'dueDate-asc', label: 'Due: Earliest', field: 'dueDate', direction: 'asc' },
+  { value: 'dueDate-desc', label: 'Due: Latest', field: 'dueDate', direction: 'desc' },
+  { value: 'title-asc', label: 'Title: A → Z', field: 'title', direction: 'asc' },
+  { value: 'title-desc', label: 'Title: Z → A', field: 'title', direction: 'desc' },
+];
 
 const defaultFilters: SearchBarFilters = {
   search: '',
@@ -37,6 +51,8 @@ const defaultFilters: SearchBarFilters = {
 export function SearchFilterBar({
   filters,
   onFiltersChange,
+  sortOption = DEFAULT_SORT,
+  onSortChange,
   className,
 }: SearchFilterBarProps) {
   const hasActiveFilters =
@@ -51,6 +67,9 @@ export function SearchFilterBar({
     filters.status !== 'all',
     filters.dueDate !== 'all',
   ].filter(Boolean).length;
+
+  const currentSortValue = `${sortOption.field}-${sortOption.direction}`;
+  const isNonDefaultSort = sortOption.field !== DEFAULT_SORT.field || sortOption.direction !== DEFAULT_SORT.direction;
 
   const handleSearchChange = (value: string) => {
     onFiltersChange({ ...filters, search: value });
@@ -70,6 +89,13 @@ export function SearchFilterBar({
 
   const handleClearFilters = () => {
     onFiltersChange(defaultFilters);
+  };
+
+  const handleSortChange = (value: string) => {
+    const option = SORT_OPTIONS.find((opt) => opt.value === value);
+    if (option && onSortChange) {
+      onSortChange({ field: option.field, direction: option.direction });
+    }
   };
 
   return (
@@ -173,6 +199,31 @@ export function SearchFilterBar({
               <SelectItem value="upcoming">Upcoming</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Separator */}
+          <div className="hidden sm:block h-6 w-px bg-border" />
+
+          {/* Sort Dropdown */}
+          {onSortChange && (
+            <Select value={currentSortValue} onValueChange={handleSortChange}>
+              <SelectTrigger
+                className={cn(
+                  'w-[150px]',
+                  isNonDefaultSort && 'border-primary/50 bg-primary/5'
+                )}
+              >
+                <ArrowUpDown className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Clear Filters Button */}
           {hasActiveFilters && (
