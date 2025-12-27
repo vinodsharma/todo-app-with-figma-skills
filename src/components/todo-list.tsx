@@ -76,7 +76,9 @@ export function TodoList({
 
   const handleEditSave = async (id: string, input: UpdateTodoInput) => {
     await onEdit(id, input);
-    setEditingTodo(null);
+    // Note: Don't call setEditingTodo(null) here - the dialog closes itself
+    // via onOpenChange(false) in handleSubmit, which triggers the parent callback.
+    // Calling it here causes a race condition with the Dialog's close animation.
   };
 
   if (isLoading) {
