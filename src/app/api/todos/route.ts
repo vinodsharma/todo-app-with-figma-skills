@@ -126,12 +126,20 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, priority, dueDate, categoryId } = body;
+    const { title, description, priority, dueDate, categoryId } = body;
 
     // Validate required fields
     if (!title || typeof title !== 'string' || title.trim() === '') {
       return NextResponse.json(
         { error: 'Title is required and cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    // Validate description length if provided (max 1000 chars)
+    if (description && typeof description === 'string' && description.length > 1000) {
+      return NextResponse.json(
+        { error: 'Description cannot exceed 1000 characters' },
         { status: 400 }
       );
     }
@@ -149,6 +157,10 @@ export async function POST(request: Request) {
       title: title.trim(),
       userId: session.user.id,
     };
+
+    if (description !== undefined) {
+      todoData.description = description ? description.trim() : null;
+    }
 
     if (priority) {
       todoData.priority = priority as Priority;
