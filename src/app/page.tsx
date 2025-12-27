@@ -5,19 +5,58 @@ import { Header } from '@/components/header';
 import { CategorySidebar } from '@/components/category-sidebar';
 import { TodoForm } from '@/components/todo-form';
 import { TodoList } from '@/components/todo-list';
+import { SearchFilterBar, SearchBarFilters, defaultFilters } from '@/components/search-filter-bar';
 import { useTodos } from '@/hooks/use-todos';
 import { useCategories } from '@/hooks/use-categories';
+import { useDebounce } from '@/hooks/use-debounce';
+import { Priority, TodoQueryParams } from '@/types';
 
 export default function Home() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<SearchBarFilters>(defaultFilters);
+
+  // Debounce search to avoid too many API calls
+  const debouncedSearch = useDebounce(filters.search, 300);
+
+  // Build query params for API
+  const queryParams = useMemo((): TodoQueryParams => {
+    const params: TodoQueryParams = {};
+
+    if (debouncedSearch) {
+      params.search = debouncedSearch;
+    }
+    if (selectedCategoryId) {
+      params.categoryId = selectedCategoryId;
+    }
+    if (filters.priority !== 'all') {
+      params.priority = filters.priority as Priority;
+    }
+    if (filters.status !== 'all') {
+      params.status = filters.status as 'active' | 'completed';
+    }
+    if (filters.dueDate !== 'all') {
+      params.dueDate = filters.dueDate as 'overdue' | 'today' | 'week' | 'upcoming';
+    }
+
+    return params;
+  }, [debouncedSearch, selectedCategoryId, filters.priority, filters.status, filters.dueDate]);
 
   const { categories, createCategory: createCategoryHook, deleteCategory, refetch: refetchCategories } = useCategories();
+  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo } = useTodos(queryParams);
+
+  // Check if any filters are active (for showing appropriate empty state)
+  const hasActiveFilters = !!(
+    debouncedSearch ||
+    selectedCategoryId ||
+    filters.priority !== 'all' ||
+    filters.status !== 'all' ||
+    filters.dueDate !== 'all'
+  );
 
   // Wrapper to match component interface (name, color) to hook interface ({ name, color })
   const handleAddCategory = async (name: string, color: string) => {
     await createCategoryHook({ name, color });
   };
-  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo } = useTodos();
 
   // Wrap todo operations to also refetch categories (to update counts)
   const handleCreateTodo = async (input: Parameters<typeof createTodo>[0]) => {
@@ -39,13 +78,10 @@ export default function Home() {
     await refetchCategories();
   };
 
-  // Filter todos based on selected category
-  const filteredTodos = useMemo(() => {
-    if (selectedCategoryId === null) {
-      return todos;
-    }
-    return todos.filter((todo) => todo.categoryId === selectedCategoryId);
-  }, [todos, selectedCategoryId]);
+  // Handle category selection - also clear filters when switching categories for cleaner UX
+  const handleSelectCategory = (categoryId: string | null) => {
+    setSelectedCategoryId(categoryId);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -54,20 +90,25 @@ export default function Home() {
         <CategorySidebar
           categories={categories}
           selectedCategoryId={selectedCategoryId}
-          onSelectCategory={setSelectedCategoryId}
+          onSelectCategory={handleSelectCategory}
           onAddCategory={handleAddCategory}
           onDeleteCategory={deleteCategory}
         />
-        <main className="flex-1 p-6 space-y-6">
+        <main className="flex-1 p-6 space-y-4">
           <TodoForm
             categories={categories}
             selectedCategoryId={selectedCategoryId || undefined}
             onSubmit={handleCreateTodo}
           />
+          <SearchFilterBar
+            filters={filters}
+            onFiltersChange={setFilters}
+          />
           <TodoList
-            todos={filteredTodos}
+            todos={todos}
             categories={categories}
             isLoading={isLoading}
+            hasActiveFilters={hasActiveFilters}
             onToggle={handleToggleTodo}
             onEdit={handleEditTodo}
             onDelete={handleDeleteTodo}

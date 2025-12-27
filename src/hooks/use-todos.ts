@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import type { Todo, CreateTodoInput, UpdateTodoInput } from '@/types';
+import type { Todo, CreateTodoInput, UpdateTodoInput, TodoQueryParams } from '@/types';
 
 interface UseTodosReturn {
   todos: Todo[];
@@ -14,16 +14,34 @@ interface UseTodosReturn {
   refetch: () => Promise<void>;
 }
 
-export function useTodos(categoryId?: string): UseTodosReturn {
+export function useTodos(filters?: TodoQueryParams): UseTodosReturn {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchTodos = useCallback(async () => {
     try {
       setIsLoading(true);
-      const url = categoryId
-        ? `/api/todos?categoryId=${encodeURIComponent(categoryId)}`
-        : '/api/todos';
+
+      // Build query string from filters
+      const params = new URLSearchParams();
+      if (filters?.search) {
+        params.set('search', filters.search);
+      }
+      if (filters?.categoryId) {
+        params.set('categoryId', filters.categoryId);
+      }
+      if (filters?.status) {
+        params.set('status', filters.status);
+      }
+      if (filters?.priority) {
+        params.set('priority', filters.priority);
+      }
+      if (filters?.dueDate) {
+        params.set('dueDate', filters.dueDate);
+      }
+
+      const queryString = params.toString();
+      const url = queryString ? `/api/todos?${queryString}` : '/api/todos';
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -38,7 +56,7 @@ export function useTodos(categoryId?: string): UseTodosReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [categoryId]);
+  }, [filters?.search, filters?.categoryId, filters?.status, filters?.priority, filters?.dueDate]);
 
   useEffect(() => {
     fetchTodos();
