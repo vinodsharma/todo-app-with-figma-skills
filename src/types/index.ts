@@ -51,3 +51,24 @@ export interface CreateCategoryInput {
   name: string;
   color?: string;
 }
+
+// Filter types for todo queries
+export type StatusFilter = 'all' | 'active' | 'completed';
+export type DueDateFilter = 'all' | 'overdue' | 'today' | 'week' | 'upcoming';
+
+export interface TodoFilters {
+  search: string;
+  priority: Priority | 'all';
+  status: StatusFilter;
+  dueDate: DueDateFilter;
+  categoryId: string | null;
+}
+
+// API query parameters for todos
+export interface TodoQueryParams {
+  search?: string;
+  priority?: Priority;
+  status?: 'active' | 'completed';
+  dueDate?: 'overdue' | 'today' | 'week' | 'upcoming';
+  categoryId?: string;
+}

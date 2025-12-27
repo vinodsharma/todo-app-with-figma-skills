@@ -5,12 +5,13 @@ import { Todo, Category, UpdateTodoInput } from "@/types";
 import { TodoItem } from "@/components/todo-item";
 import { EditTodoDialog } from "@/components/edit-todo-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, Circle, ListTodo } from "lucide-react";
+import { CheckCircle2, Circle, ListTodo, Search } from "lucide-react";
 
 interface TodoListProps {
   todos: Todo[];
   categories: Category[];
   isLoading: boolean;
+  hasActiveFilters?: boolean;
   onToggle: (id: string) => Promise<void>;
   onEdit: (id: string, input: UpdateTodoInput) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
@@ -53,10 +54,25 @@ function EmptyState() {
   );
 }
 
+function NoResultsState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="mb-4 rounded-full bg-muted p-4">
+        <Search className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="mb-1 text-lg font-medium">No matching todos</h3>
+      <p className="text-sm text-muted-foreground">
+        Try adjusting your search or filters
+      </p>
+    </div>
+  );
+}
+
 export function TodoList({
   todos,
   categories,
   isLoading,
+  hasActiveFilters = false,
   onToggle,
   onEdit,
   onDelete,
@@ -86,7 +102,7 @@ export function TodoList({
   }
 
   if (todos.length === 0) {
-    return <EmptyState />;
+    return hasActiveFilters ? <NoResultsState /> : <EmptyState />;
   }
 
   return (
