@@ -12,25 +12,89 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search');
     const categoryId = searchParams.get('categoryId');
-    const completed = searchParams.get('completed');
+    const status = searchParams.get('status');
     const priority = searchParams.get('priority');
+    const dueDate = searchParams.get('dueDate');
 
     // Build where clause
-    const where: any = {
+    const where: {
+      userId: string;
+      categoryId?: string;
+      completed?: boolean;
+      priority?: Priority;
+      title?: { contains: string; mode: 'insensitive' };
+      AND?: Array<Record<string, unknown>>;
+    } = {
       userId: session.user.id,
     };
 
+    // Search filter - case-insensitive title search
+    if (search && search.trim()) {
+      where.title = {
+        contains: search.trim(),
+        mode: 'insensitive',
+      };
+    }
+
+    // Category filter
     if (categoryId) {
       where.categoryId = categoryId;
     }
 
-    if (completed !== null && completed !== undefined) {
-      where.completed = completed === 'true';
+    // Status filter (active/completed)
+    if (status === 'active') {
+      where.completed = false;
+    } else if (status === 'completed') {
+      where.completed = true;
     }
 
+    // Priority filter
     if (priority && ['LOW', 'MEDIUM', 'HIGH'].includes(priority)) {
       where.priority = priority as Priority;
+    }
+
+    // Due date filter
+    if (dueDate) {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endOfToday = new Date(startOfToday);
+      endOfToday.setDate(endOfToday.getDate() + 1);
+
+      const endOfWeek = new Date(startOfToday);
+      endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+      switch (dueDate) {
+        case 'overdue':
+          // Overdue: dueDate < today AND not completed
+          where.AND = [
+            { dueDate: { lt: startOfToday } },
+            { dueDate: { not: null } },
+            { completed: false },
+          ];
+          break;
+        case 'today':
+          // Today: dueDate is today
+          where.AND = [
+            { dueDate: { gte: startOfToday } },
+            { dueDate: { lt: endOfToday } },
+          ];
+          break;
+        case 'week':
+          // This week: dueDate within next 7 days
+          where.AND = [
+            { dueDate: { gte: startOfToday } },
+            { dueDate: { lt: endOfWeek } },
+          ];
+          break;
+        case 'upcoming':
+          // Upcoming: dueDate > today
+          where.AND = [
+            { dueDate: { gte: endOfToday } },
+          ];
+          break;
+      }
     }
 
     const todos = await prisma.todo.findMany({
