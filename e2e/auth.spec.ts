@@ -6,8 +6,8 @@ test.describe('Authentication', () => {
 
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/);
-    // Login page has "Welcome back" as the heading
-    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+    // Login page has "Welcome back" as the card title
+    await expect(page.getByText('Welcome back')).toBeVisible();
   });
 
   test('should have login form elements', async ({ page }) => {

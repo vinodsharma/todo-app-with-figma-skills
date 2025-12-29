@@ -10,7 +10,7 @@ test.describe('Filtering and Sorting', () => {
     const searchableTitle = uniqueTitle('Searchable');
 
     await page.getByPlaceholder('Add a new todo...').fill(searchableTitle);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(searchableTitle)).toBeVisible({ timeout: 5000 });
 
     // Search for it
@@ -34,7 +34,7 @@ test.describe('Filtering and Sorting', () => {
     const form = page.locator('form');
     await form.locator('button[role="combobox"]').first().click();
     await page.getByRole('option', { name: /^high$/i }).click();
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(highTitle)).toBeVisible({ timeout: 5000 });
 
     // Create low priority todo
@@ -42,7 +42,7 @@ test.describe('Filtering and Sorting', () => {
     await page.getByPlaceholder('Add a new todo...').fill(lowTitle);
     await form.locator('button[role="combobox"]').first().click();
     await page.getByRole('option', { name: /^low$/i }).click();
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(lowTitle)).toBeVisible({ timeout: 5000 });
 
     // Filter by high priority using filter bar
@@ -59,7 +59,7 @@ test.describe('Filtering and Sorting', () => {
     // Create and complete a todo
     const completedTitle = uniqueTitle('Completed Filter');
     await page.getByPlaceholder('Add a new todo...').fill(completedTitle);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(completedTitle)).toBeVisible({ timeout: 5000 });
 
     // Mark as complete
@@ -70,7 +70,7 @@ test.describe('Filtering and Sorting', () => {
     // Create an active todo
     const activeTitle = uniqueTitle('Active Filter');
     await page.getByPlaceholder('Add a new todo...').fill(activeTitle);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(activeTitle)).toBeVisible({ timeout: 5000 });
 
     // Filter by active using filter bar
@@ -95,7 +95,7 @@ test.describe('Filtering and Sorting', () => {
     // Create a todo
     const title = uniqueTitle('Clear Filters');
     await page.getByPlaceholder('Add a new todo...').fill(title);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
     // Apply a filter that hides the todo
