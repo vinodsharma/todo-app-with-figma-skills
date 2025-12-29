@@ -6,7 +6,8 @@ test.describe('Authentication', () => {
 
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/);
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+    // Login page has "Welcome back" as the heading
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
   });
 
   test('should have login form elements', async ({ page }) => {
@@ -20,14 +21,14 @@ test.describe('Authentication', () => {
   test('should have link to register page', async ({ page }) => {
     await page.goto('/login');
 
-    const registerLink = page.getByRole('link', { name: /sign up|register|create account/i });
+    const registerLink = page.getByRole('link', { name: /sign up/i });
     await expect(registerLink).toBeVisible();
   });
 
   test('should navigate to register page', async ({ page }) => {
     await page.goto('/login');
 
-    await page.getByRole('link', { name: /sign up|register|create account/i }).click();
+    await page.getByRole('link', { name: /sign up/i }).click();
     await expect(page).toHaveURL(/\/register/);
   });
 
@@ -36,9 +37,9 @@ test.describe('Authentication', () => {
 
     await expect(page.getByLabel(/name/i)).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/^password$/i)).toBeVisible();
-    await expect(page.getByLabel(/confirm password/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /sign up|register|create account/i })).toBeVisible();
+    // Only password field, no confirm password
+    await expect(page.getByLabel(/password/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /create account/i })).toBeVisible();
   });
 
   test('should show validation error for empty email', async ({ page }) => {
@@ -73,7 +74,7 @@ test.describe('Authentication', () => {
     await page.getByLabel(/password/i).fill('wrongpassword');
     await page.getByRole('button', { name: /sign in/i }).click();
 
-    // Should show error message
+    // Should show error message (toast notification)
     await expect(page.getByText(/invalid|incorrect|wrong|failed/i)).toBeVisible({ timeout: 5000 });
   });
 });
