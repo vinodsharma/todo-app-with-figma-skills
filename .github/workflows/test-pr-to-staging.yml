@@ -6,6 +6,7 @@ on:
 
 env:
   NODE_VERSION: '20'
+  PREVIEW_URL: 'https://todo-app-preview.vercel.app'
 
 jobs:
   unit-and-api-tests:
@@ -38,6 +39,7 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
+    # Wait for both unit tests and the deploy workflow to complete
     needs: unit-and-api-tests
     steps:
       - name: Checkout
@@ -55,18 +57,62 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Wait for Vercel Preview deployment
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
-        id: wait-for-vercel
+      - name: Wait for Preview Deployment
+        uses: actions/github-script@v7
+        id: wait-for-deploy
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          max_timeout: 300
-          check_interval: 10
+          script: |
+            // Wait for the Deploy Preview workflow to complete
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const headSha = context.payload.pull_request.head.sha;
+
+            console.log(`Waiting for Deploy Preview workflow for commit ${headSha}...`);
+
+            const maxAttempts = 30;
+            const delaySeconds = 10;
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              // Get workflow runs for the head SHA
+              const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                head_sha: headSha,
+              });
+
+              // Find the Deploy Preview workflow run
+              const deployRun = runs.workflow_runs.find(run =>
+                run.name === 'Deploy Preview'
+              );
+
+              if (deployRun) {
+                console.log(`Found Deploy Preview run: ${deployRun.id}, status: ${deployRun.status}, conclusion: ${deployRun.conclusion}`);
+
+                if (deployRun.status === 'completed') {
+                  if (deployRun.conclusion === 'success') {
+                    console.log('Deploy Preview completed successfully!');
+                    return;
+                  } else {
+                    core.setFailed(`Deploy Preview failed with conclusion: ${deployRun.conclusion}`);
+                    return;
+                  }
+                }
+              } else {
+                console.log(`Deploy Preview workflow not found yet (attempt ${attempt}/${maxAttempts})`);
+              }
+
+              if (attempt < maxAttempts) {
+                console.log(`Waiting ${delaySeconds} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+              }
+            }
+
+            core.setFailed('Timed out waiting for Deploy Preview workflow');
 
       - name: Run Playwright tests
         run: npm run test:e2e
         env:
-          PLAYWRIGHT_BASE_URL: ${{ steps.wait-for-vercel.outputs.url }}
+          PLAYWRIGHT_BASE_URL: ${{ env.PREVIEW_URL }}
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
 
