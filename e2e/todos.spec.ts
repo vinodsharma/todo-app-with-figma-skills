@@ -7,14 +7,14 @@ test.describe('Todo CRUD', () => {
   });
 
   test('should display todo form', async ({ page }) => {
-    await expect(page.getByPlaceholderText(/add a new todo|what needs to be done/i)).toBeVisible();
+    await expect(page.getByPlaceholder('Add a new todo...')).toBeVisible();
   });
 
   test('should create a todo with title only', async ({ page }) => {
     const title = uniqueTitle('Simple');
 
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(title);
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByPlaceholder('Add a new todo...').fill(title);
+    await page.getByRole('button', { name: /add/i }).click();
 
     // Wait for todo to appear in list
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
@@ -24,17 +24,19 @@ test.describe('Todo CRUD', () => {
     const title = uniqueTitle('High Priority');
 
     // Fill title
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(title);
+    await page.getByPlaceholder('Add a new todo...').fill(title);
 
-    // Select high priority
-    await page.getByRole('combobox', { name: /priority/i }).click();
-    await page.getByRole('option', { name: /high/i }).click();
+    // Select high priority - click the first combobox in the form (priority is first)
+    const form = page.locator('form');
+    const prioritySelect = form.locator('button[role="combobox"]').first();
+    await prioritySelect.click();
+    await page.getByRole('option', { name: /^high$/i }).click();
 
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByRole('button', { name: /add/i }).click();
 
     // Verify todo appears with high priority badge
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
-    const todoItem = page.locator(`text=${title}`).locator('xpath=ancestor::div[contains(@class, "border")]');
+    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
     await expect(todoItem.getByText('High')).toBeVisible();
   });
 
@@ -42,48 +44,55 @@ test.describe('Todo CRUD', () => {
     const title = uniqueTitle('Complete Me');
 
     // Create todo first
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(title);
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByPlaceholder('Add a new todo...').fill(title);
+    await page.getByRole('button', { name: /add/i }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
-    // Find the checkbox for this todo and click it
-    const todoItem = page.locator(`text=${title}`).locator('xpath=ancestor::div[contains(@class, "border")]');
+    // Find the todo item and click its checkbox
+    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
     const checkbox = todoItem.getByRole('checkbox');
     await checkbox.click();
 
-    // Verify it's marked complete (title should have line-through)
-    await expect(page.getByText(title)).toHaveClass(/line-through/);
+    // Verify it's marked complete (title should have line-through class)
+    await page.waitForTimeout(500);
+    const titleElement = todoItem.locator('h3');
+    await expect(titleElement).toHaveClass(/line-through/);
   });
 
   test('should unmark completed todo', async ({ page }) => {
     const title = uniqueTitle('Toggle Complete');
 
     // Create todo
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(title);
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByPlaceholder('Add a new todo...').fill(title);
+    await page.getByRole('button', { name: /add/i }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
     // Complete it
-    const todoItem = page.locator(`text=${title}`).locator('xpath=ancestor::div[contains(@class, "border")]');
+    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
     const checkbox = todoItem.getByRole('checkbox');
     await checkbox.click();
-    await expect(page.getByText(title)).toHaveClass(/line-through/);
+    await page.waitForTimeout(500);
+    await expect(todoItem.locator('h3')).toHaveClass(/line-through/);
 
     // Uncomplete it
     await checkbox.click();
-    await expect(page.getByText(title)).not.toHaveClass(/line-through/);
+    await page.waitForTimeout(500);
+    await expect(todoItem.locator('h3')).not.toHaveClass(/line-through/);
   });
 
   test('should delete a todo', async ({ page }) => {
     const title = uniqueTitle('Delete Me');
 
     // Create todo
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(title);
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByPlaceholder('Add a new todo...').fill(title);
+    await page.getByRole('button', { name: /add/i }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
-    // Delete it
-    const todoItem = page.locator(`text=${title}`).locator('xpath=ancestor::div[contains(@class, "border")]');
+    // Find and hover over the todo item to reveal delete button
+    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
+    await todoItem.hover();
+
+    // Click delete button (has aria-label with "Delete")
     await todoItem.getByRole('button', { name: /delete/i }).click();
 
     // Verify it's gone
@@ -95,12 +104,15 @@ test.describe('Todo CRUD', () => {
     const newTitle = uniqueTitle('Edited Title');
 
     // Create todo
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(title);
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByPlaceholder('Add a new todo...').fill(title);
+    await page.getByRole('button', { name: /add/i }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
+    // Find and hover over the todo item
+    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
+    await todoItem.hover();
+
     // Click edit button
-    const todoItem = page.locator(`text=${title}`).locator('xpath=ancestor::div[contains(@class, "border")]');
     await todoItem.getByRole('button', { name: /edit/i }).click();
 
     // Edit dialog should open
@@ -124,26 +136,30 @@ test.describe('Todo CRUD', () => {
     const notes = 'These are my test notes for this todo item.';
 
     // Create todo
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(title);
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByPlaceholder('Add a new todo...').fill(title);
+    await page.getByRole('button', { name: /add/i }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
+    // Find and hover over the todo item
+    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
+    await todoItem.hover();
+
     // Click edit button
-    const todoItem = page.locator(`text=${title}`).locator('xpath=ancestor::div[contains(@class, "border")]');
     await todoItem.getByRole('button', { name: /edit/i }).click();
 
     // Add notes
-    const notesTextarea = page.getByRole('dialog').getByLabel(/notes|description/i);
+    const notesTextarea = page.getByRole('dialog').getByLabel(/description|notes/i);
     await notesTextarea.fill(notes);
 
     // Save
     await page.getByRole('dialog').getByRole('button', { name: /save|update/i }).click();
 
-    // Notes indicator should appear
-    await expect(page.getByText(/notes/i).first()).toBeVisible({ timeout: 5000 });
+    // Wait for dialog to close and notes indicator to appear
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
 
     // Click to expand notes
-    await page.getByRole('button', { name: /expand notes/i }).click();
+    const notesButton = todoItem.getByRole('button', { name: /expand notes/i });
+    await notesButton.click();
 
     // Notes content should be visible
     await expect(page.getByText(notes)).toBeVisible();
