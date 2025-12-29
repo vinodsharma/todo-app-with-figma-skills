@@ -38,8 +38,10 @@ test.describe('Todo CRUD', () => {
 
     // Verify todo appears with high priority badge
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
-    // Check that "High" badge is visible somewhere near the todo
-    await expect(page.locator('text=' + title).locator('..').locator('..').getByText('High')).toBeVisible();
+    // Check that "High" badge is visible in the todo card (use badge element specifically)
+    const todoTitle = page.locator('h3', { hasText: title });
+    const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
+    await expect(todoCard.locator('[data-slot="badge"]', { hasText: 'High' })).toBeVisible();
   });
 
   test('should mark todo as complete', async ({ page }) => {
@@ -99,7 +101,8 @@ test.describe('Todo CRUD', () => {
 
     // Hover and click delete - the button has aria-label like 'Delete "Title..."'
     await todoCard.hover();
-    const deleteButton = todoCard.locator('button[aria-label*="Delete"]');
+    // Use aria-label that starts with "Delete " to avoid matching checkbox/edit with "Delete Me" in title
+    const deleteButton = todoCard.locator('button[aria-label^="Delete "]');
     await deleteButton.click();
 
     // Verify it's gone
@@ -121,7 +124,8 @@ test.describe('Todo CRUD', () => {
 
     // Hover and click edit - the button has aria-label like 'Edit "Title..."'
     await todoCard.hover();
-    const editButton = todoCard.locator('button[aria-label*="Edit"]');
+    // Use aria-label that starts with "Edit " to avoid matching other elements
+    const editButton = todoCard.locator('button[aria-label^="Edit "]');
     await editButton.click();
 
     // Edit dialog should open
@@ -155,7 +159,8 @@ test.describe('Todo CRUD', () => {
 
     // Hover and click edit
     await todoCard.hover();
-    const editButton = todoCard.locator('button[aria-label*="Edit"]');
+    // Use aria-label that starts with "Edit " to avoid matching other elements
+    const editButton = todoCard.locator('button[aria-label^="Edit "]');
     await editButton.click();
 
     // Add notes
