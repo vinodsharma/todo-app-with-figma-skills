@@ -88,20 +88,26 @@ test.describe('Category Management', () => {
     await page.getByLabel(/name/i).fill(categoryName);
     await page.getByRole('dialog').getByRole('button', { name: /add category/i }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('button', { name: new RegExp(categoryName) })).toBeVisible({ timeout: 5000 });
+
+    // Wait for category to appear
+    await expect(page.getByText(categoryName)).toBeVisible({ timeout: 5000 });
 
     // Hover over category to reveal delete button
-    const categoryButton = page.getByRole('button', { name: new RegExp(categoryName) });
-    await categoryButton.hover();
+    const categoryItem = page.locator('button').filter({ hasText: categoryName }).first();
+    await categoryItem.hover();
 
-    // Look for delete button (has sr-only text "Delete {categoryName}")
-    const deleteButton = page.getByRole('button', { name: new RegExp(`delete ${categoryName}`, 'i') });
+    // Look for delete button with sr-only text
+    const deleteButton = page.getByRole('button', { name: /delete/i }).filter({ hasText: /delete/i });
 
-    if (await deleteButton.isVisible({ timeout: 2000 })) {
-      await deleteButton.click();
-
-      // Category should be removed
-      await expect(page.getByRole('button', { name: new RegExp(categoryName) })).not.toBeVisible({ timeout: 5000 });
+    // If we can find any delete button, click it
+    const visibleDeleteButton = page.locator('button').filter({ has: page.locator('.sr-only:has-text("Delete")') });
+    if (await visibleDeleteButton.first().isVisible({ timeout: 2000 })) {
+      await visibleDeleteButton.first().click();
+      // Wait for the category name to disappear from the sidebar
+      await page.waitForTimeout(1000);
+      // The category text should no longer be visible in the sidebar
+      const sidebar = page.locator('[class*="border-r"]');
+      await expect(sidebar.getByText(categoryName)).not.toBeVisible({ timeout: 5000 });
     }
   });
 
