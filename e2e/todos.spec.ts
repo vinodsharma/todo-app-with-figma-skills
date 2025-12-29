@@ -14,7 +14,8 @@ test.describe('Todo CRUD', () => {
     const title = uniqueTitle('Simple');
 
     await page.getByPlaceholder('Add a new todo...').fill(title);
-    await page.getByRole('button', { name: /add/i }).click();
+    // Use exact match to avoid matching "Add Category"
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
 
     // Wait for todo to appear in list
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
@@ -32,7 +33,7 @@ test.describe('Todo CRUD', () => {
     await prioritySelect.click();
     await page.getByRole('option', { name: /^high$/i }).click();
 
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
 
     // Verify todo appears with high priority badge
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
@@ -45,7 +46,7 @@ test.describe('Todo CRUD', () => {
 
     // Create todo first
     await page.getByPlaceholder('Add a new todo...').fill(title);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
     // Find the todo item and click its checkbox
@@ -64,7 +65,7 @@ test.describe('Todo CRUD', () => {
 
     // Create todo
     await page.getByPlaceholder('Add a new todo...').fill(title);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
     // Complete it
@@ -85,7 +86,7 @@ test.describe('Todo CRUD', () => {
 
     // Create todo
     await page.getByPlaceholder('Add a new todo...').fill(title);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
     // Find and hover over the todo item to reveal delete button
@@ -105,7 +106,7 @@ test.describe('Todo CRUD', () => {
 
     // Create todo
     await page.getByPlaceholder('Add a new todo...').fill(title);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
     // Find and hover over the todo item
@@ -137,7 +138,7 @@ test.describe('Todo CRUD', () => {
 
     // Create todo
     await page.getByPlaceholder('Add a new todo...').fill(title);
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
     // Find and hover over the todo item
