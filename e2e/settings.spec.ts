@@ -39,17 +39,17 @@ test.describe('Settings and Theme', () => {
   });
 
   test('should show user avatar in header', async ({ page }) => {
-    // The user menu trigger is a button with an avatar inside the header
+    // Look for any button in header that's not the theme toggle
     const header = page.locator('header');
-    // Look for a button that contains an avatar (could be img or span with initials)
-    const avatarButton = header.locator('button').filter({ has: page.locator('[class*="avatar"], img') }).last();
+    // The avatar is inside a button with class "rounded-full"
+    const avatarButton = header.locator('button.rounded-full');
     await expect(avatarButton).toBeVisible();
   });
 
   test('should have sign out option', async ({ page }) => {
-    // Click user menu (avatar button in header)
+    // Click the rounded avatar button in header
     const header = page.locator('header');
-    const avatarButton = header.locator('button').filter({ has: page.locator('[class*="avatar"], img') }).last();
+    const avatarButton = header.locator('button.rounded-full');
     await avatarButton.click();
 
     // Look for sign out option
@@ -58,9 +58,9 @@ test.describe('Settings and Theme', () => {
   });
 
   test('should sign out and redirect to login', async ({ page }) => {
-    // Click user menu (avatar button in header)
+    // Click the rounded avatar button in header
     const header = page.locator('header');
-    const avatarButton = header.locator('button').filter({ has: page.locator('[class*="avatar"], img') }).last();
+    const avatarButton = header.locator('button.rounded-full');
     await avatarButton.click();
 
     // Click sign out
