@@ -27,9 +27,10 @@ test.describe('Todo CRUD', () => {
     // Fill title
     await page.getByPlaceholder('Add a new todo...').fill(title);
 
-    // Select high priority - click the first combobox in the form (priority is first)
-    const form = page.locator('form');
-    const prioritySelect = form.locator('button[role="combobox"]').first();
+    // Find the todo form (not filter bar) and select priority
+    // The form contains the "Add a new todo" input
+    const todoForm = page.locator('form').filter({ has: page.getByPlaceholder('Add a new todo...') });
+    const prioritySelect = todoForm.locator('button[role="combobox"]').first();
     await prioritySelect.click();
     await page.getByRole('option', { name: /^high$/i }).click();
 
@@ -37,8 +38,8 @@ test.describe('Todo CRUD', () => {
 
     // Verify todo appears with high priority badge
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
-    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
-    await expect(todoItem.getByText('High')).toBeVisible();
+    // Check that "High" badge is visible somewhere near the todo
+    await expect(page.locator('text=' + title).locator('..').locator('..').getByText('High')).toBeVisible();
   });
 
   test('should mark todo as complete', async ({ page }) => {
@@ -49,15 +50,15 @@ test.describe('Todo CRUD', () => {
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
-    // Find the todo item and click its checkbox
-    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
-    const checkbox = todoItem.getByRole('checkbox');
+    // Find the todo item's checkbox (the checkbox is in the same container as the title)
+    const todoTitle = page.locator('h3', { hasText: title });
+    const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
+    const checkbox = todoCard.getByRole('checkbox');
     await checkbox.click();
 
     // Verify it's marked complete (title should have line-through class)
     await page.waitForTimeout(500);
-    const titleElement = todoItem.locator('h3');
-    await expect(titleElement).toHaveClass(/line-through/);
+    await expect(todoTitle).toHaveClass(/line-through/);
   });
 
   test('should unmark completed todo', async ({ page }) => {
@@ -68,17 +69,20 @@ test.describe('Todo CRUD', () => {
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
+    // Find elements
+    const todoTitle = page.locator('h3', { hasText: title });
+    const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
+    const checkbox = todoCard.getByRole('checkbox');
+
     // Complete it
-    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
-    const checkbox = todoItem.getByRole('checkbox');
     await checkbox.click();
     await page.waitForTimeout(500);
-    await expect(todoItem.locator('h3')).toHaveClass(/line-through/);
+    await expect(todoTitle).toHaveClass(/line-through/);
 
     // Uncomplete it
     await checkbox.click();
     await page.waitForTimeout(500);
-    await expect(todoItem.locator('h3')).not.toHaveClass(/line-through/);
+    await expect(todoTitle).not.toHaveClass(/line-through/);
   });
 
   test('should delete a todo', async ({ page }) => {
@@ -89,15 +93,17 @@ test.describe('Todo CRUD', () => {
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
-    // Find and hover over the todo item to reveal delete button
-    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
-    await todoItem.hover();
+    // Find the todo card
+    const todoTitle = page.locator('h3', { hasText: title });
+    const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Click delete button (has aria-label with "Delete")
-    await todoItem.getByRole('button', { name: /delete/i }).click();
+    // Hover and click delete - the button has aria-label like 'Delete "Title..."'
+    await todoCard.hover();
+    const deleteButton = todoCard.locator('button[aria-label*="Delete"]');
+    await deleteButton.click();
 
     // Verify it's gone
-    await expect(page.getByText(title)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h3', { hasText: title })).not.toBeVisible({ timeout: 5000 });
   });
 
   test('should edit a todo', async ({ page }) => {
@@ -109,12 +115,14 @@ test.describe('Todo CRUD', () => {
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
-    // Find and hover over the todo item
-    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
-    await todoItem.hover();
+    // Find the todo card
+    const todoTitle = page.locator('h3', { hasText: title });
+    const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Click edit button
-    await todoItem.getByRole('button', { name: /edit/i }).click();
+    // Hover and click edit - the button has aria-label like 'Edit "Title..."'
+    await todoCard.hover();
+    const editButton = todoCard.locator('button[aria-label*="Edit"]');
+    await editButton.click();
 
     // Edit dialog should open
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -128,8 +136,8 @@ test.describe('Todo CRUD', () => {
     await page.getByRole('dialog').getByRole('button', { name: /save|update/i }).click();
 
     // Verify new title appears
-    await expect(page.getByText(newTitle)).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText(title)).not.toBeVisible();
+    await expect(page.locator('h3', { hasText: newTitle })).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h3', { hasText: title })).not.toBeVisible();
   });
 
   test('should add notes to a todo', async ({ page }) => {
@@ -141,12 +149,14 @@ test.describe('Todo CRUD', () => {
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
-    // Find and hover over the todo item
-    const todoItem = page.locator('[class*="border"]').filter({ hasText: title }).first();
-    await todoItem.hover();
+    // Find the todo card
+    const todoTitle = page.locator('h3', { hasText: title });
+    const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Click edit button
-    await todoItem.getByRole('button', { name: /edit/i }).click();
+    // Hover and click edit
+    await todoCard.hover();
+    const editButton = todoCard.locator('button[aria-label*="Edit"]');
+    await editButton.click();
 
     // Add notes
     const notesTextarea = page.getByRole('dialog').getByLabel(/description|notes/i);
@@ -155,11 +165,11 @@ test.describe('Todo CRUD', () => {
     // Save
     await page.getByRole('dialog').getByRole('button', { name: /save|update/i }).click();
 
-    // Wait for dialog to close and notes indicator to appear
+    // Wait for dialog to close
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
 
     // Click to expand notes
-    const notesButton = todoItem.getByRole('button', { name: /expand notes/i });
+    const notesButton = todoCard.getByRole('button', { name: /expand notes/i });
     await notesButton.click();
 
     // Notes content should be visible

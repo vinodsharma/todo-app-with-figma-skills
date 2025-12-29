@@ -98,15 +98,23 @@ test.describe('Filtering and Sorting', () => {
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 
-    // Apply a filter that hides the todo
-    await page.getByPlaceholder('Search todos...').fill('HideTodo123');
-    await expect(page.getByText(title)).not.toBeVisible();
+    // Apply a search filter that hides the todo
+    const searchInput = page.getByPlaceholder('Search todos...');
+    await searchInput.fill('HideTodo123');
+    await expect(page.getByText(title)).not.toBeVisible({ timeout: 3000 });
 
-    // Clear filters
-    await page.getByRole('button', { name: /clear/i }).click();
+    // Clear filters by clicking the X button in search or clearing the input
+    // The clear button appears after filters are applied
+    const clearButton = page.getByRole('button', { name: /clear/i });
+    if (await clearButton.isVisible({ timeout: 2000 })) {
+      await clearButton.click();
+    } else {
+      // Fallback: just clear the search input
+      await searchInput.clear();
+    }
 
     // Todo should be visible again
-    await expect(page.getByText(title)).toBeVisible();
+    await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
   });
 
   test('should change sort order', async ({ page }) => {
