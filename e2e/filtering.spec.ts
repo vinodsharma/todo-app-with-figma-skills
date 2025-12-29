@@ -104,10 +104,10 @@ test.describe('Filtering and Sorting', () => {
     await expect(page.getByText(title)).not.toBeVisible({ timeout: 3000 });
 
     // Clear filters by clicking the X button in search or clearing the input
-    // The clear button appears after filters are applied
-    const clearButton = page.getByRole('button', { name: /clear/i });
-    if (await clearButton.isVisible({ timeout: 2000 })) {
-      await clearButton.click();
+    // Use 'Clear search' to specifically target the search clear button
+    const clearSearchButton = page.getByRole('button', { name: 'Clear search' });
+    if (await clearSearchButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await clearSearchButton.click();
     } else {
       // Fallback: just clear the search input
       await searchInput.clear();

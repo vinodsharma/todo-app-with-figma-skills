@@ -89,25 +89,24 @@ test.describe('Category Management', () => {
     await page.getByRole('dialog').getByRole('button', { name: /add category/i }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
 
-    // Wait for category to appear
-    await expect(page.getByText(categoryName)).toBeVisible({ timeout: 5000 });
+    // Wait for category button to appear in sidebar (use role selector to avoid matching dropdown options)
+    const categoryButton = page.getByRole('button', { name: new RegExp(categoryName) });
+    await expect(categoryButton).toBeVisible({ timeout: 5000 });
 
     // Hover over category to reveal delete button
-    const categoryItem = page.locator('button').filter({ hasText: categoryName }).first();
-    await categoryItem.hover();
+    await categoryButton.hover();
 
-    // Look for delete button with sr-only text
-    const deleteButton = page.getByRole('button', { name: /delete/i }).filter({ hasText: /delete/i });
+    // Find the delete button within the category's parent container
+    // The category button and delete button are siblings in the same li element
+    const categoryContainer = categoryButton.locator('xpath=ancestor::li').first();
+    const visibleDeleteButton = categoryContainer.locator('button').filter({ has: page.locator('.sr-only:has-text("Delete")') });
 
-    // If we can find any delete button, click it
-    const visibleDeleteButton = page.locator('button').filter({ has: page.locator('.sr-only:has-text("Delete")') });
     if (await visibleDeleteButton.first().isVisible({ timeout: 2000 })) {
       await visibleDeleteButton.first().click();
-      // Wait for the category name to disappear from the sidebar
+      // Wait for the category to be deleted
       await page.waitForTimeout(1000);
-      // The category text should no longer be visible in the sidebar
-      const sidebar = page.locator('[class*="border-r"]');
-      await expect(sidebar.getByText(categoryName)).not.toBeVisible({ timeout: 5000 });
+      // The category button should no longer be visible in the sidebar
+      await expect(categoryButton).not.toBeVisible({ timeout: 5000 });
     }
   });
 
