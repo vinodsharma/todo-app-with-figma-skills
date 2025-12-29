@@ -7,16 +7,16 @@ test.describe('Category Management', () => {
 
   test('should display category sidebar', async ({ page }) => {
     // Sidebar should be visible with "All Todos" option
-    await expect(page.getByText(/all todos/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /all todos/i })).toBeVisible();
   });
 
   test('should have add category button', async ({ page }) => {
-    const addButton = page.getByRole('button', { name: /add category|new category|\+/i });
+    const addButton = page.getByRole('button', { name: /add category/i });
     await expect(addButton).toBeVisible();
   });
 
   test('should open add category dialog', async ({ page }) => {
-    await page.getByRole('button', { name: /add category|new category|\+/i }).click();
+    await page.getByRole('button', { name: /add category/i }).click();
 
     // Dialog should open with name input
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -27,17 +27,20 @@ test.describe('Category Management', () => {
     const categoryName = `Test Category ${Date.now()}`;
 
     // Open add category dialog
-    await page.getByRole('button', { name: /add category|new category|\+/i }).click();
+    await page.getByRole('button', { name: /add category/i }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
 
     // Fill in name
     await page.getByLabel(/name/i).fill(categoryName);
 
     // Submit
-    await page.getByRole('dialog').getByRole('button', { name: /add|create|save/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: /add category/i }).click();
+
+    // Wait for dialog to close
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
 
     // Category should appear in sidebar
-    await expect(page.getByText(categoryName)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: new RegExp(categoryName) })).toBeVisible({ timeout: 5000 });
   });
 
   test('should filter todos by category', async ({ page }) => {
@@ -45,54 +48,60 @@ test.describe('Category Management', () => {
     const todoTitle = `Category Todo ${Date.now()}`;
 
     // Create a category
-    await page.getByRole('button', { name: /add category|new category|\+/i }).click();
+    await page.getByRole('button', { name: /add category/i }).click();
     await page.getByLabel(/name/i).fill(categoryName);
-    await page.getByRole('dialog').getByRole('button', { name: /add|create|save/i }).click();
-    await expect(page.getByText(categoryName)).toBeVisible({ timeout: 5000 });
+    await page.getByRole('dialog').getByRole('button', { name: /add category/i }).click();
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: new RegExp(categoryName) })).toBeVisible({ timeout: 5000 });
 
     // Create a todo in that category
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(todoTitle);
+    await page.getByPlaceholder('Add a new todo...').fill(todoTitle);
 
-    // Select the category
-    const categorySelect = page.locator('form').getByRole('combobox', { name: /category/i });
+    // Select the category from the form's category dropdown
+    const form = page.locator('form');
+    const categorySelects = form.locator('button[role="combobox"]');
+    // The category select is the last one (after priority)
+    const categorySelect = categorySelects.last();
     if (await categorySelect.isVisible()) {
       await categorySelect.click();
-      await page.getByRole('option', { name: categoryName }).click();
+      await page.getByRole('option', { name: new RegExp(categoryName) }).click();
     }
 
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByRole('button', { name: /add/i }).click();
     await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
 
     // Click on the category in sidebar to filter
-    await page.locator('aside').getByText(categoryName).click();
+    await page.getByRole('button', { name: new RegExp(categoryName) }).click();
 
     // Todo should still be visible
     await expect(page.getByText(todoTitle)).toBeVisible();
 
     // Click on "All Todos" to see all
-    await page.getByText(/all todos/i).click();
+    await page.getByRole('button', { name: /all todos/i }).click();
   });
 
   test('should delete a category', async ({ page }) => {
     const categoryName = `Delete Category ${Date.now()}`;
 
     // Create a category
-    await page.getByRole('button', { name: /add category|new category|\+/i }).click();
+    await page.getByRole('button', { name: /add category/i }).click();
     await page.getByLabel(/name/i).fill(categoryName);
-    await page.getByRole('dialog').getByRole('button', { name: /add|create|save/i }).click();
-    await expect(page.getByText(categoryName)).toBeVisible({ timeout: 5000 });
+    await page.getByRole('dialog').getByRole('button', { name: /add category/i }).click();
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: new RegExp(categoryName) })).toBeVisible({ timeout: 5000 });
 
     // Hover over category to reveal delete button
-    const categoryItem = page.locator('aside').locator(`text=${categoryName}`).locator('xpath=ancestor::*[contains(@class, "group")]');
+    const categoryButton = page.getByRole('button', { name: new RegExp(categoryName) });
+    await categoryButton.hover();
 
-    // Look for delete button
-    const deleteButton = categoryItem.getByRole('button', { name: /delete/i });
+    // Look for delete button (has sr-only text "Delete {categoryName}")
+    const deleteButton = page.getByRole('button', { name: new RegExp(`delete ${categoryName}`, 'i') });
 
-    if (await deleteButton.isVisible()) {
+    if (await deleteButton.isVisible({ timeout: 2000 })) {
       await deleteButton.click();
 
       // Category should be removed
-      await expect(page.getByText(categoryName)).not.toBeVisible({ timeout: 5000 });
+      await expect(page.getByRole('button', { name: new RegExp(categoryName) })).not.toBeVisible({ timeout: 5000 });
     }
   });
 
@@ -101,25 +110,32 @@ test.describe('Category Management', () => {
     const todoTitle = `Count Todo ${Date.now()}`;
 
     // Create a category
-    await page.getByRole('button', { name: /add category|new category|\+/i }).click();
+    await page.getByRole('button', { name: /add category/i }).click();
     await page.getByLabel(/name/i).fill(categoryName);
-    await page.getByRole('dialog').getByRole('button', { name: /add|create|save/i }).click();
-    await expect(page.getByText(categoryName)).toBeVisible({ timeout: 5000 });
+    await page.getByRole('dialog').getByRole('button', { name: /add category/i }).click();
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: new RegExp(categoryName) })).toBeVisible({ timeout: 5000 });
+
+    // Initially should show 0 count (category button should contain "0")
+    const categoryButton = page.getByRole('button', { name: new RegExp(categoryName) });
+    await expect(categoryButton).toContainText('0');
 
     // Create a todo in that category
-    await page.getByPlaceholderText(/add a new todo|what needs to be done/i).fill(todoTitle);
+    await page.getByPlaceholder('Add a new todo...').fill(todoTitle);
 
-    const categorySelect = page.locator('form').getByRole('combobox', { name: /category/i });
+    // Select the category
+    const form = page.locator('form');
+    const categorySelects = form.locator('button[role="combobox"]');
+    const categorySelect = categorySelects.last();
     if (await categorySelect.isVisible()) {
       await categorySelect.click();
-      await page.getByRole('option', { name: categoryName }).click();
+      await page.getByRole('option', { name: new RegExp(categoryName) }).click();
     }
 
-    await page.getByRole('button', { name: /add|create|submit/i }).click();
+    await page.getByRole('button', { name: /add/i }).click();
     await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
 
-    // Category should show count (1)
-    const categoryItem = page.locator('aside').locator(`text=${categoryName}`).locator('xpath=ancestor::*[contains(@class, "group")]');
-    await expect(categoryItem.getByText('1')).toBeVisible();
+    // Category should now show count 1
+    await expect(categoryButton).toContainText('1');
   });
 });
