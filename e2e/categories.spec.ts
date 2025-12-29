@@ -67,7 +67,7 @@ test.describe('Category Management', () => {
       await page.getByRole('option', { name: new RegExp(categoryName) }).click();
     }
 
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
 
     // Click on the category in sidebar to filter
@@ -132,7 +132,7 @@ test.describe('Category Management', () => {
       await page.getByRole('option', { name: new RegExp(categoryName) }).click();
     }
 
-    await page.getByRole('button', { name: /add/i }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
 
     // Category should now show count 1
