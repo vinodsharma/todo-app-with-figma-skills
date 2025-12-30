@@ -6,6 +6,7 @@ on:
 
 env:
   NODE_VERSION: '20'
+  STAGING_URL: 'https://todo-app-staging-silk.vercel.app'
 
 jobs:
   e2e-against-staging:
@@ -32,7 +33,7 @@ jobs:
       - name: Run Playwright tests against Staging
         run: npm run test:e2e
         env:
-          PLAYWRIGHT_BASE_URL: ${{ secrets.STAGING_URL }}
+          PLAYWRIGHT_BASE_URL: ${{ env.STAGING_URL }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
