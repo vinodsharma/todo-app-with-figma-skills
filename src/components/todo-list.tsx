@@ -90,6 +90,15 @@ export function TodoList({
 
   const allTodos = useMemo(() => [...activeTodos, ...completedTodos], [activeTodos, completedTodos]);
 
+  // Create a Map for O(1) index lookups (avoids O(n²) from findIndex in render loops)
+  const todoIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    allTodos.forEach((todo, index) => {
+      map.set(todo.id, index);
+    });
+    return map;
+  }, [allTodos]);
+
   const handleEditClick = (todo: Todo) => {
     setEditingTodo(todo);
   };
@@ -122,19 +131,16 @@ export function TodoList({
             </span>
           </div>
           <div className="space-y-2">
-            {activeTodos.map((todo) => {
-              const globalIndex = allTodos.findIndex(t => t.id === todo.id);
-              return (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  isSelected={selectedIndex === globalIndex}
-                  onToggle={onToggle}
-                  onEdit={handleEditClick}
-                  onDelete={onDelete}
-                />
-              );
-            })}
+            {activeTodos.map((todo) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                isSelected={selectedIndex === todoIndexMap.get(todo.id)}
+                onToggle={onToggle}
+                onEdit={handleEditClick}
+                onDelete={onDelete}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -148,19 +154,16 @@ export function TodoList({
             <span>({completedTodos.length})</span>
           </div>
           <div className="space-y-2">
-            {completedTodos.map((todo) => {
-              const globalIndex = allTodos.findIndex(t => t.id === todo.id);
-              return (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  isSelected={selectedIndex === globalIndex}
-                  onToggle={onToggle}
-                  onEdit={handleEditClick}
-                  onDelete={onDelete}
-                />
-              );
-            })}
+            {completedTodos.map((todo) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                isSelected={selectedIndex === todoIndexMap.get(todo.id)}
+                onToggle={onToggle}
+                onEdit={handleEditClick}
+                onDelete={onDelete}
+              />
+            ))}
           </div>
         </div>
       )}
