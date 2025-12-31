@@ -63,11 +63,10 @@ export function useKeyboardShortcuts({
     const currentTodos = todosRef.current;
     const currentIndex = selectedIndexRef.current;
 
-    // Escape always works (closes dialogs, clears selection)
+    // Escape clears selection (don't preventDefault - let dialogs handle their own close)
     if (key === 'Escape') {
-      event.preventDefault();
       setSelectedIndex(null);
-      setIsHelpOpen(false);
+      // Don't call setIsHelpOpen(false) - let the dialog's onOpenChange handle closing
       return;
     }
 
