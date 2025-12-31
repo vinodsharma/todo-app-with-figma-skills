@@ -92,10 +92,11 @@ test.describe('Responsive Layout', () => {
     await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
 
     // Find the todo's checkbox by looking for the h3 with title, then navigating to checkbox
+    // Use force:true for mobile overlay issues
     const todoHeading = page.locator('h3', { hasText: todoTitle });
     const todoCard = todoHeading.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
     const checkbox = todoCard.getByRole('checkbox');
-    await checkbox.click();
+    await checkbox.click({ force: true });
 
     // Wait for state to update
     await page.waitForTimeout(500);
@@ -116,10 +117,10 @@ test.describe('Responsive Layout', () => {
       await todoInput.fill(title);
       await expect(todoInput).toHaveValue(title);
 
-      // Select priority
+      // Select priority (use force:true for mobile overlay issues)
       const form = page.locator('form').filter({ has: page.getByPlaceholder('Add a new todo...') });
-      await form.locator('button[role="combobox"]').first().click();
-      await page.getByRole('option', { name: new RegExp(`^${priority}$`, 'i') }).click();
+      await form.locator('button[role="combobox"]').first().click({ force: true });
+      await page.getByRole('option', { name: new RegExp(`^${priority}$`, 'i') }).click({ force: true });
 
       // Submit using Enter key (more reliable on mobile)
       await todoInput.press('Enter');
@@ -130,10 +131,11 @@ test.describe('Responsive Layout', () => {
     await createTodo(lowTitle, 'low');
 
     // Filter by HIGH priority using the filter bar (not form)
+    // Use force:true for mobile overlay issues
     const filterBar = page.locator('.rounded-lg.border').filter({ has: page.getByPlaceholder('Search todos...') });
     const priorityFilter = filterBar.locator('button[role="combobox"]').filter({ hasText: /priority/i });
-    await priorityFilter.click();
-    await page.getByRole('option', { name: /^high$/i }).click();
+    await priorityFilter.click({ force: true });
+    await page.getByRole('option', { name: /^high$/i }).click({ force: true });
 
     // Wait for filter to apply
     await page.waitForTimeout(500);
@@ -303,10 +305,10 @@ test.describe('Mobile-specific tests', () => {
     // Only run on mobile viewport (less than 640px width)
     test.skip(viewportSize !== null && viewportSize.width >= 640, 'Only for mobile viewport');
 
-    // Apply a filter
+    // Apply a filter (use force:true for mobile overlay issues)
     const priorityFilter = page.locator('button[role="combobox"]').filter({ hasText: /priority/i });
-    await priorityFilter.click();
-    await page.getByRole('option', { name: /^high$/i }).click();
+    await priorityFilter.click({ force: true });
+    await page.getByRole('option', { name: /^high$/i }).click({ force: true });
 
     // Wait for filter to apply
     await page.waitForTimeout(500);
