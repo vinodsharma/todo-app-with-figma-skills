@@ -31,6 +31,23 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'mobile',
+      use: {
+        ...devices['Pixel 5'],
+      },
+      testMatch: /responsive\.spec\.ts/,
+    },
+    {
+      name: 'tablet',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 810, height: 1080 },
+        isMobile: true,
+        hasTouch: true,
+      },
+      testMatch: /responsive\.spec\.ts/,
+    },
     // Uncomment to add more browsers in CI
     // {
     //   name: 'firefox',
