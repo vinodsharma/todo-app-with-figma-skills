@@ -115,8 +115,8 @@ export async function GET(request: Request) {
     type OrderByClause = { [key: string]: 'asc' | 'desc' };
     const orderBy: OrderByClause[] = [{ completed: 'asc' }];
 
-    // Add secondary sort based on sortBy param (priority is handled separately)
-    if (sortBy && sortBy !== 'priority') {
+    // Add secondary sort based on sortBy param (priority and title are handled separately in JS)
+    if (sortBy && sortBy !== 'priority' && sortBy !== 'title') {
       orderBy.push({ [sortBy]: sortDirection });
     } else if (!sortBy) {
       // Default to createdAt desc
@@ -142,6 +142,19 @@ export async function GET(request: Request) {
         const aVal = PRIORITY_ORDER[a.priority];
         const bVal = PRIORITY_ORDER[b.priority];
         return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
+      });
+    }
+
+    // Handle title sorting in JavaScript for case-insensitive comparison
+    if (sortBy === 'title') {
+      todos = todos.sort((a, b) => {
+        // Keep completed items at the end
+        if (a.completed !== b.completed) {
+          return a.completed ? 1 : -1;
+        }
+        // Case-insensitive alphabetical sort
+        const comparison = a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
+        return sortDirection === 'desc' ? -comparison : comparison;
       });
     }
 
