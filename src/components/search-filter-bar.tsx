@@ -133,7 +133,7 @@ export function SearchFilterBar({
           <Select value={filters.priority} onValueChange={handlePriorityChange}>
             <SelectTrigger
               className={cn(
-                'w-[110px]',
+                'w-[90px] sm:w-[110px]',
                 filters.priority !== 'all' && 'border-primary/50 bg-primary/5'
               )}
             >
@@ -166,7 +166,7 @@ export function SearchFilterBar({
           <Select value={filters.status} onValueChange={handleStatusChange}>
             <SelectTrigger
               className={cn(
-                'w-[120px]',
+                'w-[90px] sm:w-[120px]',
                 filters.status !== 'all' && 'border-primary/50 bg-primary/5'
               )}
             >
@@ -183,7 +183,7 @@ export function SearchFilterBar({
           <Select value={filters.dueDate} onValueChange={handleDueDateChange}>
             <SelectTrigger
               className={cn(
-                'w-[130px]',
+                'w-[90px] sm:w-[130px]',
                 filters.dueDate !== 'all' && 'border-primary/50 bg-primary/5'
               )}
             >
@@ -208,11 +208,11 @@ export function SearchFilterBar({
             <Select value={currentSortValue} onValueChange={handleSortChange}>
               <SelectTrigger
                 className={cn(
-                  'w-[150px]',
+                  'w-[100px] sm:w-[150px]',
                   isNonDefaultSort && 'border-primary/50 bg-primary/5'
                 )}
               >
-                <ArrowUpDown className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                <ArrowUpDown className="mr-1.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
