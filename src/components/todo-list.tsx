@@ -15,6 +15,7 @@ interface TodoListProps {
   selectedIndex?: number | null;
   onToggle: (id: string) => Promise<void>;
   onEdit: (id: string, input: UpdateTodoInput) => Promise<void>;
+  onEditClick?: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -77,8 +78,10 @@ export function TodoList({
   selectedIndex,
   onToggle,
   onEdit,
+  onEditClick,
   onDelete,
 }: TodoListProps) {
+  // Internal edit state (used when onEditClick is not provided)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
   const { activeTodos, completedTodos } = useMemo(() => {
@@ -100,7 +103,11 @@ export function TodoList({
   }, [allTodos]);
 
   const handleEditClick = (todo: Todo) => {
-    setEditingTodo(todo);
+    if (onEditClick) {
+      onEditClick(todo);
+    } else {
+      setEditingTodo(todo);
+    }
   };
 
   const handleEditSave = async (id: string, input: UpdateTodoInput) => {
@@ -168,8 +175,8 @@ export function TodoList({
         </div>
       )}
 
-      {/* Edit Todo Dialog */}
-      {editingTodo && (
+      {/* Edit Todo Dialog (only rendered when parent doesn't handle editing) */}
+      {!onEditClick && editingTodo && (
         <EditTodoDialog
           todo={editingTodo}
           categories={categories}

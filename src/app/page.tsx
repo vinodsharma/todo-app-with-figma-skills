@@ -6,15 +6,19 @@ import { CategorySidebar } from '@/components/category-sidebar';
 import { TodoForm } from '@/components/todo-form';
 import { TodoList } from '@/components/todo-list';
 import { SearchFilterBar, SearchBarFilters, defaultFilters } from '@/components/search-filter-bar';
+import { EditTodoDialog } from '@/components/edit-todo-dialog';
+import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
 import { useTodos } from '@/hooks/use-todos';
 import { useCategories } from '@/hooks/use-categories';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useSortPreference } from '@/hooks/use-sort-preference';
-import { Priority, TodoQueryParams } from '@/types';
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { Priority, Todo, TodoQueryParams } from '@/types';
 
 export default function Home() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [filters, setFilters] = useState<SearchBarFilters>(defaultFilters);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const { sortOption, setSortOption, isLoaded: sortLoaded } = useSortPreference();
 
   // Debounce search to avoid too many API calls
@@ -63,6 +67,13 @@ export default function Home() {
     filters.dueDate !== 'all'
   );
 
+  // Flat todo list for keyboard navigation (active first, then completed)
+  const allTodos = useMemo(() => {
+    const active = todos.filter(t => !t.completed);
+    const completed = todos.filter(t => t.completed);
+    return [...active, ...completed];
+  }, [todos]);
+
   // Wrapper to match component interface (name, color) to hook interface ({ name, color })
   const handleAddCategory = async (name: string, color: string) => {
     await createCategoryHook({ name, color });
@@ -87,6 +98,19 @@ export default function Home() {
     await updateTodo(id, input);
     await refetchCategories();
   };
+
+  // Handle edit click from both TodoList and keyboard shortcuts
+  const handleEditClick = (todo: Todo) => {
+    setEditingTodo(todo);
+  };
+
+  // Keyboard shortcuts (must be after handlers are defined)
+  const { selectedIndex, isHelpOpen, setIsHelpOpen } = useKeyboardShortcuts({
+    todos: allTodos,
+    onToggle: handleToggleTodo,
+    onEdit: handleEditClick,
+    onDelete: handleDeleteTodo,
+  });
 
   // Handle category selection - also clear filters when switching categories for cleaner UX
   const handleSelectCategory = (categoryId: string | null) => {
@@ -121,12 +145,28 @@ export default function Home() {
             categories={categories}
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
+            selectedIndex={selectedIndex}
             onToggle={handleToggleTodo}
             onEdit={handleEditTodo}
+            onEditClick={handleEditClick}
             onDelete={handleDeleteTodo}
           />
         </main>
       </div>
+
+      {/* Edit Dialog (triggered by keyboard shortcut 'e') */}
+      {editingTodo && (
+        <EditTodoDialog
+          todo={editingTodo}
+          categories={categories}
+          open={!!editingTodo}
+          onOpenChange={(open) => !open && setEditingTodo(null)}
+          onSave={handleEditTodo}
+        />
+      )}
+
+      {/* Keyboard Shortcuts Help Dialog (triggered by '?') */}
+      <KeyboardShortcutsDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
     </div>
   );
 }
