@@ -13,6 +13,7 @@ interface TodoItemProps {
   onToggle: (id: string) => Promise<void>;
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
+  isSelected?: boolean;
 }
 
 const priorityConfig: Record<Priority, { label: string; className: string }> = {
@@ -32,14 +33,17 @@ const priorityConfig: Record<Priority, { label: string; className: string }> = {
   },
 };
 
-export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
+export function TodoItem({ todo, onToggle, onEdit, onDelete, isSelected = false }: TodoItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isOverdue =
     todo.dueDate && !todo.completed && new Date(todo.dueDate) < new Date();
   const hasDescription = todo.description && todo.description.trim().length > 0;
 
   return (
-    <div className="group flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent/50">
+    <div className={cn(
+      "group flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-all hover:bg-accent/50",
+      isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+    )}>
       <Checkbox
         checked={todo.completed}
         onCheckedChange={() => onToggle(todo.id)}
