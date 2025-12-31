@@ -4,6 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { Todo, CreateTodoInput, UpdateTodoInput, TodoQueryParams } from '@/types';
 
+interface UseTodosOptions {
+  filters?: TodoQueryParams;
+  enabled?: boolean; // Whether to fetch (default: true)
+}
+
 interface UseTodosReturn {
   todos: Todo[];
   isLoading: boolean;
@@ -14,7 +19,21 @@ interface UseTodosReturn {
   refetch: () => Promise<void>;
 }
 
-export function useTodos(filters?: TodoQueryParams): UseTodosReturn {
+function isOptionsObject(arg: TodoQueryParams | UseTodosOptions | undefined): arg is UseTodosOptions {
+  return arg !== undefined && 'enabled' in arg;
+}
+
+export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): UseTodosReturn {
+  // Support both old signature (filters) and new signature (options object)
+  let filters: TodoQueryParams | undefined;
+  let enabled = true;
+
+  if (isOptionsObject(filtersOrOptions)) {
+    filters = filtersOrOptions.filters;
+    enabled = filtersOrOptions.enabled ?? true;
+  } else {
+    filters = filtersOrOptions;
+  }
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -65,8 +84,10 @@ export function useTodos(filters?: TodoQueryParams): UseTodosReturn {
   }, [filters?.search, filters?.categoryId, filters?.status, filters?.priority, filters?.dueDate, filters?.sortBy, filters?.sortDirection]);
 
   useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
+    if (enabled) {
+      fetchTodos();
+    }
+  }, [fetchTodos, enabled]);
 
   const createTodo = async (input: CreateTodoInput) => {
     try {

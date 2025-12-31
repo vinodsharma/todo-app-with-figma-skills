@@ -15,7 +15,7 @@ import { Priority, TodoQueryParams } from '@/types';
 export default function Home() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [filters, setFilters] = useState<SearchBarFilters>(defaultFilters);
-  const { sortOption, setSortOption } = useSortPreference();
+  const { sortOption, setSortOption, isLoaded: sortLoaded } = useSortPreference();
 
   // Debounce search to avoid too many API calls
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -48,7 +48,11 @@ export default function Home() {
   }, [debouncedSearch, selectedCategoryId, filters.priority, filters.status, filters.dueDate, sortOption]);
 
   const { categories, createCategory: createCategoryHook, deleteCategory, refetch: refetchCategories } = useCategories();
-  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo } = useTodos(queryParams);
+  // Wait for sort preference to load before fetching todos to avoid race condition
+  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo } = useTodos({
+    filters: queryParams,
+    enabled: sortLoaded,
+  });
 
   // Check if any filters are active (for showing appropriate empty state)
   const hasActiveFilters = !!(
