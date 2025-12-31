@@ -81,13 +81,13 @@ export function TodoForm({
           className="flex-1"
         />
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select
             value={priority}
             onValueChange={(value) => setPriority(value as Priority)}
             disabled={isLoading}
           >
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[100px] sm:w-[120px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -104,12 +104,12 @@ export function TodoForm({
                 variant="outline"
                 disabled={isLoading}
                 className={cn(
-                  'w-[140px] justify-start text-left font-normal',
+                  'min-w-[100px] sm:w-[140px] justify-start text-left font-normal',
                   !dueDate && 'text-muted-foreground'
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dueDate ? format(dueDate, 'MMM dd, yyyy') : 'Due date'}
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate">{dueDate ? format(dueDate, 'MMM dd, yyyy') : 'Due date'}</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -131,7 +131,7 @@ export function TodoForm({
               onValueChange={setCategoryId}
               disabled={isLoading}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[100px] sm:w-[140px]">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -139,10 +139,10 @@ export function TodoForm({
                   <SelectItem key={category.id} value={category.id}>
                     <div className="flex items-center gap-2">
                       <div
-                        className="h-3 w-3 rounded-full"
+                        className="h-3 w-3 rounded-full shrink-0"
                         style={{ backgroundColor: category.color }}
                       />
-                      {category.name}
+                      <span className="truncate">{category.name}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -151,8 +151,8 @@ export function TodoForm({
           )}
 
           <Button type="submit" disabled={isLoading || !title.trim()}>
-            <Plus className="h-4 w-4 mr-1" />
-            Add
+            <Plus className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Add</span>
           </Button>
         </div>
       </div>
