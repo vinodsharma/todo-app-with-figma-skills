@@ -12,6 +12,7 @@ interface TodoListProps {
   categories: Category[];
   isLoading: boolean;
   hasActiveFilters?: boolean;
+  selectedIndex?: number | null;
   onToggle: (id: string) => Promise<void>;
   onEdit: (id: string, input: UpdateTodoInput) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
@@ -73,6 +74,7 @@ export function TodoList({
   categories,
   isLoading,
   hasActiveFilters = false,
+  selectedIndex,
   onToggle,
   onEdit,
   onDelete,
@@ -85,6 +87,8 @@ export function TodoList({
       completedTodos: todos.filter((todo) => todo.completed),
     };
   }, [todos]);
+
+  const allTodos = useMemo(() => [...activeTodos, ...completedTodos], [activeTodos, completedTodos]);
 
   const handleEditClick = (todo: Todo) => {
     setEditingTodo(todo);
@@ -118,15 +122,19 @@ export function TodoList({
             </span>
           </div>
           <div className="space-y-2">
-            {activeTodos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                onToggle={onToggle}
-                onEdit={handleEditClick}
-                onDelete={onDelete}
-              />
-            ))}
+            {activeTodos.map((todo) => {
+              const globalIndex = allTodos.findIndex(t => t.id === todo.id);
+              return (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  isSelected={selectedIndex === globalIndex}
+                  onToggle={onToggle}
+                  onEdit={handleEditClick}
+                  onDelete={onDelete}
+                />
+              );
+            })}
           </div>
         </div>
       )}
@@ -140,15 +148,19 @@ export function TodoList({
             <span>({completedTodos.length})</span>
           </div>
           <div className="space-y-2">
-            {completedTodos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                onToggle={onToggle}
-                onEdit={handleEditClick}
-                onDelete={onDelete}
-              />
-            ))}
+            {completedTodos.map((todo) => {
+              const globalIndex = allTodos.findIndex(t => t.id === todo.id);
+              return (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  isSelected={selectedIndex === globalIndex}
+                  onToggle={onToggle}
+                  onEdit={handleEditClick}
+                  onDelete={onDelete}
+                />
+              );
+            })}
           </div>
         </div>
       )}
