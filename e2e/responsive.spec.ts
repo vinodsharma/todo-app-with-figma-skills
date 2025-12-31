@@ -138,9 +138,9 @@ test.describe('Responsive Layout', () => {
     await todoInput.press('Enter');
     await expect(page.getByText(searchableTitle)).toBeVisible({ timeout: 5000 });
 
-    // Search for the todo
+    // Search for the todo (use force:true for mobile overlay issues)
     const searchInput = page.getByPlaceholder('Search todos...');
-    await searchInput.click();
+    await searchInput.click({ force: true });
     await searchInput.fill('XYZ');
 
     // Wait for search to apply
