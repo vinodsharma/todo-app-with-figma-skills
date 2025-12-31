@@ -122,7 +122,8 @@ test.describe('Responsive Layout', () => {
       await form.locator('button[role="combobox"]').first().click({ force: true });
       await page.getByRole('option', { name: new RegExp(`^${priority}$`, 'i') }).click({ force: true });
 
-      // Submit using Enter key (more reliable on mobile)
+      // Submit using Enter key - refocus input first since dropdown steals focus
+      await todoInput.focus();
       await todoInput.press('Enter');
       await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
     }
@@ -313,8 +314,8 @@ test.describe('Mobile-specific tests', () => {
     // Wait for filter to apply
     await page.waitForTimeout(500);
 
-    // Should see filter summary on mobile
-    const filterSummary = page.getByText(/filter.*active/i);
+    // Should see filter summary on mobile (use more specific selector)
+    const filterSummary = page.locator('span').filter({ hasText: /filter.*active/i });
     await expect(filterSummary).toBeVisible();
   });
 });
