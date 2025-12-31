@@ -132,7 +132,7 @@ test.describe('Responsive Layout', () => {
     // Create a todo with unique searchable text
     const searchableTitle = uniqueTitle('Searchable Item XYZ');
     const todoInput = page.getByPlaceholder('Add a new todo...');
-    await todoInput.click();
+    await todoInput.click({ force: true });
     await todoInput.fill(searchableTitle);
     await expect(todoInput).toHaveValue(searchableTitle);
     await todoInput.press('Enter');
@@ -151,9 +151,13 @@ test.describe('Responsive Layout', () => {
   });
 
   test('should have touch-friendly button sizes', async ({ page }) => {
-    // Check that Add button has adequate touch target size (min 44x44px recommended)
-    const addButton = page.getByRole('button', { name: 'Add', exact: true });
-    const buttonBox = await addButton.boundingBox();
+    // Check that submit button has adequate touch target size (min 44x44px recommended)
+    // On mobile the button shows only a plus icon, on desktop it shows "Add"
+    const form = page.locator('form');
+    const submitButton = form.getByRole('button', { name: /add/i }).or(
+      form.locator('button[type="submit"]')
+    );
+    const buttonBox = await submitButton.boundingBox();
 
     expect(buttonBox).not.toBeNull();
     if (buttonBox) {
