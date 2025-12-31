@@ -39,6 +39,12 @@ export function useTodos(filters?: TodoQueryParams): UseTodosReturn {
       if (filters?.dueDate) {
         params.set('dueDate', filters.dueDate);
       }
+      if (filters?.sortBy) {
+        params.set('sortBy', filters.sortBy);
+      }
+      if (filters?.sortDirection) {
+        params.set('sortDirection', filters.sortDirection);
+      }
 
       const queryString = params.toString();
       const url = queryString ? `/api/todos?${queryString}` : '/api/todos';
@@ -56,7 +62,7 @@ export function useTodos(filters?: TodoQueryParams): UseTodosReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [filters?.search, filters?.categoryId, filters?.status, filters?.priority, filters?.dueDate]);
+  }, [filters?.search, filters?.categoryId, filters?.status, filters?.priority, filters?.dueDate, filters?.sortBy, filters?.sortDirection]);
 
   useEffect(() => {
     fetchTodos();
