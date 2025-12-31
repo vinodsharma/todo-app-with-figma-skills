@@ -4,6 +4,17 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Priority } from '@prisma/client';
 
+// Priority values for sorting (HIGH > MEDIUM > LOW)
+const PRIORITY_ORDER: Record<Priority, number> = {
+  HIGH: 3,
+  MEDIUM: 2,
+  LOW: 1,
+};
+
+// Valid sort fields and directions
+type SortField = 'priority' | 'dueDate' | 'createdAt' | 'title';
+type SortDirection = 'asc' | 'desc';
+
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -17,6 +28,8 @@ export async function GET(request: Request) {
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
     const dueDate = searchParams.get('dueDate');
+    const sortBy = searchParams.get('sortBy') as SortField | null;
+    const sortDirection = (searchParams.get('sortDirection') || 'desc') as SortDirection;
 
     // Build where clause
     const where: {
@@ -97,16 +110,40 @@ export async function GET(request: Request) {
       }
     }
 
-    const todos = await prisma.todo.findMany({
+    // Build orderBy clause based on sortBy param
+    // Always keep completed items last, then apply user's sort preference
+    type OrderByClause = { [key: string]: 'asc' | 'desc' };
+    const orderBy: OrderByClause[] = [{ completed: 'asc' }];
+
+    // Add secondary sort based on sortBy param (priority is handled separately)
+    if (sortBy && sortBy !== 'priority') {
+      orderBy.push({ [sortBy]: sortDirection });
+    } else if (!sortBy) {
+      // Default to createdAt desc
+      orderBy.push({ createdAt: 'desc' });
+    }
+
+    let todos = await prisma.todo.findMany({
       where,
       include: {
         category: true,
       },
-      orderBy: [
-        { completed: 'asc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy,
     });
+
+    // Handle priority sorting in JavaScript (Prisma doesn't support custom enum ordering)
+    if (sortBy === 'priority') {
+      todos = todos.sort((a, b) => {
+        // Keep completed items at the end
+        if (a.completed !== b.completed) {
+          return a.completed ? 1 : -1;
+        }
+        // Sort by priority
+        const aVal = PRIORITY_ORDER[a.priority];
+        const bVal = PRIORITY_ORDER[b.priority];
+        return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
+      });
+    }
 
     return NextResponse.json(todos);
   } catch (error) {
