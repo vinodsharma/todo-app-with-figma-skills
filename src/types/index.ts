@@ -59,6 +59,21 @@ export interface CreateCategoryInput {
 export type StatusFilter = 'all' | 'active' | 'completed';
 export type DueDateFilter = 'all' | 'overdue' | 'today' | 'week' | 'upcoming';
 
+// Sort types for todo list
+export type SortField = 'priority' | 'dueDate' | 'createdAt' | 'title';
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortOption {
+  field: SortField;
+  direction: SortDirection;
+}
+
+// Default sort option
+export const DEFAULT_SORT: SortOption = {
+  field: 'createdAt',
+  direction: 'desc',
+};
+
 export interface TodoFilters {
   search: string;
   priority: Priority | 'all';
@@ -74,19 +89,6 @@ export interface TodoQueryParams {
   status?: 'active' | 'completed';
   dueDate?: 'overdue' | 'today' | 'week' | 'upcoming';
   categoryId?: string;
+  sortBy?: SortField;
+  sortDirection?: SortDirection;
 }
-
-// Sort types for todo list
-export type SortField = 'priority' | 'dueDate' | 'createdAt' | 'title';
-export type SortDirection = 'asc' | 'desc';
-
-export interface SortOption {
-  field: SortField;
-  direction: SortDirection;
-}
-
-// Default sort option
-export const DEFAULT_SORT: SortOption = {
-  field: 'createdAt',
-  direction: 'desc',
-};

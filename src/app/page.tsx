@@ -10,43 +10,7 @@ import { useTodos } from '@/hooks/use-todos';
 import { useCategories } from '@/hooks/use-categories';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useSortPreference } from '@/hooks/use-sort-preference';
-import { Priority, TodoQueryParams, SortOption, Todo } from '@/types';
-
-// Priority values for sorting (HIGH > MEDIUM > LOW)
-const PRIORITY_ORDER = {
-  HIGH: 3,
-  MEDIUM: 2,
-  LOW: 1,
-};
-
-// Sort comparator function
-function compareTodos(a: Todo, b: Todo, sortOption: SortOption): number {
-  const { field, direction } = sortOption;
-  const multiplier = direction === 'asc' ? 1 : -1;
-
-  switch (field) {
-    case 'priority': {
-      const aVal = PRIORITY_ORDER[a.priority];
-      const bVal = PRIORITY_ORDER[b.priority];
-      return (bVal - aVal) * multiplier; // Higher priority first for desc
-    }
-    case 'dueDate': {
-      // Null dates go to the end
-      if (!a.dueDate && !b.dueDate) return 0;
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-      return (new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()) * multiplier;
-    }
-    case 'createdAt': {
-      return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * multiplier;
-    }
-    case 'title': {
-      return a.title.localeCompare(b.title) * multiplier;
-    }
-    default:
-      return 0;
-  }
-}
+import { Priority, TodoQueryParams } from '@/types';
 
 export default function Home() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -76,16 +40,15 @@ export default function Home() {
       params.dueDate = filters.dueDate as 'overdue' | 'today' | 'week' | 'upcoming';
     }
 
+    // Add sort params - backend handles sorting now
+    params.sortBy = sortOption.field;
+    params.sortDirection = sortOption.direction;
+
     return params;
-  }, [debouncedSearch, selectedCategoryId, filters.priority, filters.status, filters.dueDate]);
+  }, [debouncedSearch, selectedCategoryId, filters.priority, filters.status, filters.dueDate, sortOption]);
 
   const { categories, createCategory: createCategoryHook, deleteCategory, refetch: refetchCategories } = useCategories();
   const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo } = useTodos(queryParams);
-
-  // Sort todos based on user preference
-  const sortedTodos = useMemo(() => {
-    return [...todos].sort((a, b) => compareTodos(a, b, sortOption));
-  }, [todos, sortOption]);
 
   // Check if any filters are active (for showing appropriate empty state)
   const hasActiveFilters = !!(
@@ -150,7 +113,7 @@ export default function Home() {
             onSortChange={setSortOption}
           />
           <TodoList
-            todos={sortedTodos}
+            todos={todos}
             categories={categories}
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
