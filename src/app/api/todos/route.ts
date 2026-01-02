@@ -34,6 +34,7 @@ export async function GET(request: Request) {
     // Build where clause
     const where: {
       userId: string;
+      parentId?: string | null;
       categoryId?: string;
       completed?: boolean;
       priority?: Priority;
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
       AND?: Array<Record<string, unknown>>;
     } = {
       userId: session.user.id,
+      parentId: null,  // Only fetch top-level todos
     };
 
     // Search filter - case-insensitive title search
@@ -127,6 +129,13 @@ export async function GET(request: Request) {
       where,
       include: {
         category: true,
+        subtasks: {
+          orderBy: { createdAt: 'asc' },
+          include: { category: true },
+        },
+        _count: {
+          select: { subtasks: true },
+        },
       },
       orderBy,
     });
@@ -176,7 +185,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, description, priority, dueDate, categoryId } = body;
+    const { title, description, priority, dueDate, categoryId, parentId } = body;
 
     // Validate required fields
     if (!title || typeof title !== 'string' || title.trim() === '') {
@@ -220,7 +229,32 @@ export async function POST(request: Request) {
       todoData.dueDate = new Date(dueDate);
     }
 
-    if (categoryId) {
+    // Handle parentId for subtasks
+    if (parentId) {
+      const parent = await prisma.todo.findUnique({
+        where: { id: parentId },
+      });
+
+      // Validate parent exists and belongs to user
+      if (!parent || parent.userId !== session.user.id) {
+        return NextResponse.json(
+          { error: 'Parent todo not found' },
+          { status: 404 }
+        );
+      }
+
+      // Validate parent is not itself a subtask (single-level nesting only)
+      if (parent.parentId !== null) {
+        return NextResponse.json(
+          { error: 'Cannot create subtask of a subtask (single-level nesting only)' },
+          { status: 400 }
+        );
+      }
+
+      todoData.parentId = parentId;
+      // Inherit category from parent
+      todoData.categoryId = parent.categoryId;
+    } else if (categoryId) {
       todoData.categoryId = categoryId;
     }
 

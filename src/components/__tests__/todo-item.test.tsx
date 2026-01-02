@@ -21,6 +21,7 @@ const mockTodo = {
   userId: 'user-1',
   createdAt: new Date(),
   updatedAt: new Date(),
+  parentId: null,
 };
 
 describe('TodoItem', () => {

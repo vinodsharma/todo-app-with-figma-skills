@@ -28,6 +28,12 @@ export interface Todo {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
+  // Subtasks support
+  parentId: string | null;
+  subtasks?: Todo[];
+  _count?: {
+    subtasks: number;
+  };
 }
 
 // Input types for creating todos
@@ -37,6 +43,7 @@ export interface CreateTodoInput {
   priority?: Priority;
   dueDate?: string;
   categoryId?: string;
+  parentId?: string;
 }
 
 // Input types for updating todos
