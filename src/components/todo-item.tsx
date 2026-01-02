@@ -194,6 +194,7 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete, onAddSubtask, isSel
                 key={subtask.id}
                 subtask={subtask}
                 onToggle={onToggle}
+                onEdit={onEdit}
                 onDelete={onDelete}
               />
             ))}
