@@ -97,6 +97,10 @@ model Todo {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // Recurrence fields
+  recurrenceRule  String?    // iCal RRULE format, e.g. "FREQ=WEEKLY;BYDAY=MO,WE,FR"
+  recurrenceEnd   DateTime?  // Optional end date for recurrence
+
   // Subtasks relation (single-level nesting only)
   parentId    String?
   parent      Todo?     @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
