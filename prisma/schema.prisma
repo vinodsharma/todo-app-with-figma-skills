@@ -97,6 +97,12 @@ model Todo {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // Subtasks relation (single-level nesting only)
+  parentId    String?
+  parent      Todo?     @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks    Todo[]    @relation("Subtasks")
+
   @@index([userId])
   @@index([categoryId])
+  @@index([parentId])
 }

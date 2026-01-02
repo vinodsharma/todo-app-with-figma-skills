@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Todo, Priority } from "@/types";
+import { SubtaskItem } from "./subtask-item";
+import { AddSubtaskInput } from "./add-subtask-input";
 
 interface TodoItemProps {
   todo: Todo;
   onToggle: (id: string) => Promise<void>;
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void>;
   isSelected?: boolean;
 }
 
@@ -33,17 +36,47 @@ const priorityConfig: Record<Priority, { label: string; className: string }> = {
   },
 };
 
-export function TodoItem({ todo, onToggle, onEdit, onDelete, isSelected = false }: TodoItemProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function TodoItem({ todo, onToggle, onEdit, onDelete, onAddSubtask, isSelected = false }: TodoItemProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isSubtasksExpanded, setIsSubtasksExpanded] = useState(false);
+
   const isOverdue =
     todo.dueDate && !todo.completed && new Date(todo.dueDate) < new Date();
   const hasDescription = todo.description && todo.description.trim().length > 0;
+
+  // Subtask calculations
+  const subtasks = todo.subtasks || [];
+  const subtaskCount = subtasks.length;
+  const completedSubtasks = subtasks.filter(s => s.completed).length;
+  const hasSubtasks = subtaskCount > 0;
+
+  const handleAddSubtask = async (title: string) => {
+    if (onAddSubtask) {
+      await onAddSubtask(todo.id, title);
+    }
+  };
 
   return (
     <div className={cn(
       "group flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-all hover:bg-accent/50",
       isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background"
     )}>
+      {/* Expand/collapse chevron for subtasks */}
+      <button
+        onClick={() => setIsSubtasksExpanded(!isSubtasksExpanded)}
+        className={cn(
+          "mt-0.5 p-0.5 rounded hover:bg-accent transition-colors",
+          !hasSubtasks && !onAddSubtask && "invisible"
+        )}
+        aria-label={isSubtasksExpanded ? "Collapse subtasks" : "Expand subtasks"}
+      >
+        {isSubtasksExpanded ? (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        )}
+      </button>
+
       <Checkbox
         checked={todo.completed}
         onCheckedChange={() => onToggle(todo.id)}
@@ -53,14 +86,22 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete, isSelected = false 
 
       <div className="flex-1 space-y-2">
         <div className="flex items-start justify-between gap-2">
-          <h3
-            className={cn(
-              "font-medium leading-tight",
-              todo.completed && "text-muted-foreground line-through",
+          <div className="flex items-center gap-2">
+            <h3
+              className={cn(
+                "font-medium leading-tight",
+                todo.completed && "text-muted-foreground line-through",
+              )}
+            >
+              {todo.title}
+            </h3>
+            {/* Subtask progress badge */}
+            {hasSubtasks && (
+              <Badge variant="secondary" className="text-xs font-normal">
+                {completedSubtasks}/{subtaskCount}
+              </Badge>
             )}
-          >
-            {todo.title}
-          </h3>
+          </div>
 
           <div className="flex shrink-0 gap-1">
             <button
@@ -123,13 +164,13 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete, isSelected = false 
           {/* Description indicator */}
           {hasDescription && (
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
+              aria-label={isDescriptionExpanded ? "Collapse notes" : "Expand notes"}
             >
               <FileText className="h-3 w-3" />
               <span>Notes</span>
-              {isExpanded ? (
+              {isDescriptionExpanded ? (
                 <ChevronUp className="h-3 w-3" />
               ) : (
                 <ChevronDown className="h-3 w-3" />
@@ -139,9 +180,26 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete, isSelected = false 
         </div>
 
         {/* Description content */}
-        {hasDescription && isExpanded && (
+        {hasDescription && isDescriptionExpanded && (
           <div className="mt-2 rounded-md bg-muted/50 p-3 text-sm text-muted-foreground whitespace-pre-wrap">
             {todo.description}
+          </div>
+        )}
+
+        {/* Subtasks section */}
+        {isSubtasksExpanded && (
+          <div className="mt-3 space-y-2 pl-1">
+            {subtasks.map((subtask) => (
+              <SubtaskItem
+                key={subtask.id}
+                subtask={subtask}
+                onToggle={onToggle}
+                onDelete={onDelete}
+              />
+            ))}
+            {onAddSubtask && (
+              <AddSubtaskInput onAdd={handleAddSubtask} />
+            )}
           </div>
         )}
       </div>

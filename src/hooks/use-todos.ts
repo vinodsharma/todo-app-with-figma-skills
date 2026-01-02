@@ -155,7 +155,22 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
   };
 
   const toggleTodo = async (id: string) => {
-    const todo = todos.find((t) => t.id === id);
+    // First, try to find in top-level todos
+    let todo = todos.find((t) => t.id === id);
+
+    // If not found, search in subtasks
+    if (!todo) {
+      for (const parentTodo of todos) {
+        if (parentTodo.subtasks) {
+          const subtask = parentTodo.subtasks.find((s) => s.id === id);
+          if (subtask) {
+            todo = subtask;
+            break;
+          }
+        }
+      }
+    }
+
     if (!todo) {
       toast.error('Todo not found');
       return;
