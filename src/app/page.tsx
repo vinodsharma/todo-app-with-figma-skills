@@ -53,7 +53,7 @@ export default function Home() {
 
   const { categories, createCategory: createCategoryHook, deleteCategory, refetch: refetchCategories } = useCategories();
   // Wait for sort preference to load before fetching todos to avoid race condition
-  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo } = useTodos({
+  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, refetch: fetchTodos } = useTodos({
     filters: queryParams,
     enabled: sortLoaded,
   });
@@ -97,6 +97,26 @@ export default function Home() {
   const handleEditTodo = async (id: string, input: Parameters<typeof updateTodo>[1]) => {
     await updateTodo(id, input);
     await refetchCategories();
+  };
+
+  const handleAddSubtask = async (parentId: string, title: string) => {
+    try {
+      const response = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, parentId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create subtask');
+      }
+
+      // Refresh todos to get updated subtasks
+      await fetchTodos();
+    } catch (error) {
+      console.error('Error creating subtask:', error);
+    }
   };
 
   // Handle edit click from both TodoList and keyboard shortcuts
@@ -150,6 +170,7 @@ export default function Home() {
             onEdit={handleEditTodo}
             onEditClick={handleEditClick}
             onDelete={handleDeleteTodo}
+            onAddSubtask={handleAddSubtask}
           />
         </main>
       </div>

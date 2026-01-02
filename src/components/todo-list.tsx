@@ -17,6 +17,7 @@ interface TodoListProps {
   onEdit: (id: string, input: UpdateTodoInput) => Promise<void>;
   onEditClick?: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void>;
 }
 
 function TodoListSkeleton() {
@@ -80,6 +81,7 @@ export function TodoList({
   onEdit,
   onEditClick,
   onDelete,
+  onAddSubtask,
 }: TodoListProps) {
   // Internal edit state (used when onEditClick is not provided)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
@@ -146,6 +148,7 @@ export function TodoList({
                 onToggle={onToggle}
                 onEdit={handleEditClick}
                 onDelete={onDelete}
+                onAddSubtask={onAddSubtask}
               />
             ))}
           </div>
@@ -169,6 +172,7 @@ export function TodoList({
                 onToggle={onToggle}
                 onEdit={handleEditClick}
                 onDelete={onDelete}
+                onAddSubtask={onAddSubtask}
               />
             ))}
           </div>
