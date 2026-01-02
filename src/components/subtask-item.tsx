@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Todo } from '@/types';
@@ -8,10 +8,11 @@ import { Todo } from '@/types';
 interface SubtaskItemProps {
   subtask: Todo;
   onToggle: (id: string) => Promise<void>;
+  onEdit: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
 }
 
-export function SubtaskItem({ subtask, onToggle, onDelete }: SubtaskItemProps) {
+export function SubtaskItem({ subtask, onToggle, onEdit, onDelete }: SubtaskItemProps) {
   return (
     <div className="group flex items-center gap-3 rounded-md border border-border/50 bg-muted/30 px-3 py-2 transition-all hover:bg-muted/50">
       <Checkbox
@@ -30,6 +31,13 @@ export function SubtaskItem({ subtask, onToggle, onDelete }: SubtaskItemProps) {
         {subtask.title}
       </span>
 
+      <button
+        onClick={() => onEdit(subtask)}
+        className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+        aria-label={`Edit "${subtask.title}"`}
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </button>
       <button
         onClick={() => onDelete(subtask.id)}
         className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
