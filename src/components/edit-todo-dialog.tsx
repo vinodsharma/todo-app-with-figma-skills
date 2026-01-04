@@ -30,6 +30,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Category, Todo, Priority, UpdateTodoInput } from '@/types';
 import { cn } from '@/lib/utils';
+import { RecurrenceSelector } from './recurrence-selector';
 
 interface EditTodoDialogProps {
   todo: Todo;
@@ -59,6 +60,9 @@ export function EditTodoDialog({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [recurrenceRule, setRecurrenceRule] = useState<string | null>(
+    todo.recurrenceRule || null
+  );
 
   const MAX_DESCRIPTION_LENGTH = 1000;
 
@@ -70,6 +74,7 @@ export function EditTodoDialog({
       setPriority(todo.priority);
       setDueDate(todo.dueDate ? new Date(todo.dueDate) : undefined);
       setCategoryId(todo.categoryId || NO_CATEGORY);
+      setRecurrenceRule(todo.recurrenceRule || null);
     }
   }, [open, todo]);
 
@@ -85,6 +90,7 @@ export function EditTodoDialog({
         priority,
         dueDate: dueDate ? dueDate.toISOString() : undefined,
         categoryId: categoryId === NO_CATEGORY ? undefined : categoryId,
+        recurrenceRule: recurrenceRule,
       });
       onOpenChange(false);
     } catch (error) {
@@ -232,6 +238,16 @@ export function EditTodoDialog({
                   </Button>
                 )}
               </div>
+            </div>
+
+            {/* Recurrence */}
+            <div className="grid gap-2">
+              <Label>Repeat</Label>
+              <RecurrenceSelector
+                value={recurrenceRule}
+                onChange={setRecurrenceRule}
+                disabled={isLoading}
+              />
             </div>
           </div>
           <DialogFooter>
