@@ -18,6 +18,8 @@ interface TodoListProps {
   onEditClick?: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
   onAddSubtask?: (parentId: string, title: string) => Promise<void>;
+  onSkipRecurrence?: (id: string) => Promise<void>;
+  onStopRecurrence?: (id: string) => Promise<void>;
 }
 
 function TodoListSkeleton() {
@@ -82,6 +84,8 @@ export function TodoList({
   onEditClick,
   onDelete,
   onAddSubtask,
+  onSkipRecurrence,
+  onStopRecurrence,
 }: TodoListProps) {
   // Internal edit state (used when onEditClick is not provided)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
@@ -149,6 +153,8 @@ export function TodoList({
                 onEdit={handleEditClick}
                 onDelete={onDelete}
                 onAddSubtask={onAddSubtask}
+                onSkipRecurrence={onSkipRecurrence}
+                onStopRecurrence={onStopRecurrence}
               />
             ))}
           </div>
@@ -173,6 +179,8 @@ export function TodoList({
                 onEdit={handleEditClick}
                 onDelete={onDelete}
                 onAddSubtask={onAddSubtask}
+                onSkipRecurrence={onSkipRecurrence}
+                onStopRecurrence={onStopRecurrence}
               />
             ))}
           </div>

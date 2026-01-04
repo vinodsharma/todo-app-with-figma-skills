@@ -2,9 +2,15 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, FileText, Repeat } from "lucide-react";
+import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, FileText, Repeat, MoreHorizontal, SkipForward, Ban } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Todo, Priority } from "@/types";
 import { getRecurrenceDescription } from "@/lib/recurrence";
@@ -17,6 +23,8 @@ interface TodoItemProps {
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
   onAddSubtask?: (parentId: string, title: string) => Promise<void>;
+  onSkipRecurrence?: (id: string) => Promise<void>;
+  onStopRecurrence?: (id: string) => Promise<void>;
   isSelected?: boolean;
 }
 
@@ -37,7 +45,7 @@ const priorityConfig: Record<Priority, { label: string; className: string }> = {
   },
 };
 
-export function TodoItem({ todo, onToggle, onEdit, onDelete, onAddSubtask, isSelected = false }: TodoItemProps) {
+export function TodoItem({ todo, onToggle, onEdit, onDelete, onAddSubtask, onSkipRecurrence, onStopRecurrence, isSelected = false }: TodoItemProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isSubtasksExpanded, setIsSubtasksExpanded] = useState(false);
 
@@ -105,20 +113,41 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete, onAddSubtask, isSel
           </div>
 
           <div className="flex shrink-0 gap-1">
-            <button
-              onClick={() => onEdit(todo)}
-              className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
-              aria-label={`Edit "${todo.title}"`}
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onDelete(todo.id)}
-              className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
-              aria-label={`Delete "${todo.title}"`}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                  aria-label={`Actions for "${todo.title}"`}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(todo)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                {todo.recurrenceRule && onSkipRecurrence && (
+                  <DropdownMenuItem onClick={() => onSkipRecurrence(todo.id)}>
+                    <SkipForward className="mr-2 h-4 w-4" />
+                    Skip this occurrence
+                  </DropdownMenuItem>
+                )}
+                {todo.recurrenceRule && onStopRecurrence && (
+                  <DropdownMenuItem onClick={() => onStopRecurrence(todo.id)}>
+                    <Ban className="mr-2 h-4 w-4" />
+                    Stop repeating
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={() => onDelete(todo.id)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
