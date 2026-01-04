@@ -20,6 +20,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Category, CreateTodoInput, Priority } from '@/types';
 import { cn } from '@/lib/utils';
+import { RecurrenceSelector } from './recurrence-selector';
 
 interface TodoFormProps {
   categories: Category[];
@@ -40,6 +41,7 @@ export function TodoForm({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [recurrenceRule, setRecurrenceRule] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +58,7 @@ export function TodoForm({
         priority,
         dueDate: dueDate ? dueDate.toISOString() : undefined,
         categoryId: categoryId || undefined,
+        recurrenceRule: recurrenceRule || undefined,
       });
 
       // Clear form after successful submission
@@ -63,6 +66,7 @@ export function TodoForm({
       setPriority(Priority.MEDIUM);
       setDueDate(undefined);
       setCategoryId(selectedCategoryId);
+      setRecurrenceRule(null);
     } finally {
       setIsLoading(false);
     }
@@ -149,6 +153,14 @@ export function TodoForm({
               </SelectContent>
             </Select>
           )}
+
+          <div className="w-[140px] sm:w-[160px]">
+            <RecurrenceSelector
+              value={recurrenceRule}
+              onChange={setRecurrenceRule}
+              disabled={isLoading}
+            />
+          </div>
 
           <Button type="submit" disabled={isLoading || !title.trim()}>
             <Plus className="h-4 w-4 sm:mr-1" />
