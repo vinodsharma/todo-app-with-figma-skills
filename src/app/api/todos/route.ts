@@ -185,7 +185,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, description, priority, dueDate, categoryId, parentId } = body;
+    const { title, description, priority, dueDate, categoryId, parentId, recurrenceRule, recurrenceEnd } = body;
 
     // Validate required fields
     if (!title || typeof title !== 'string' || title.trim() === '') {
@@ -227,6 +227,14 @@ export async function POST(request: Request) {
 
     if (dueDate) {
       todoData.dueDate = new Date(dueDate);
+    }
+
+    if (recurrenceRule) {
+      todoData.recurrenceRule = recurrenceRule;
+    }
+
+    if (recurrenceEnd) {
+      todoData.recurrenceEnd = new Date(recurrenceEnd);
     }
 
     // Handle parentId for subtasks
