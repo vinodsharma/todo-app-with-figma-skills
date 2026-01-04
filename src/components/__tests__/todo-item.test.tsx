@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@/test/utils';
+import { render, screen, fireEvent, waitFor } from '@/test/utils';
+import userEvent from '@testing-library/user-event';
 import { TodoItem } from '../todo-item';
 import { Priority } from '@prisma/client';
 
@@ -167,7 +168,8 @@ describe('TodoItem', () => {
     expect(mockOnToggle).toHaveBeenCalledWith('todo-1');
   });
 
-  it('should call onEdit when edit button is clicked', () => {
+  it('should call onEdit when edit menu item is clicked', async () => {
+    const user = userEvent.setup();
     render(
       <TodoItem
         todo={mockTodo}
@@ -177,13 +179,19 @@ describe('TodoItem', () => {
       />
     );
 
-    const editButton = screen.getByLabelText('Edit "Test Todo"');
-    fireEvent.click(editButton);
+    // Open dropdown menu using userEvent for better Radix UI support
+    const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+    await user.click(menuButton);
+
+    // Click Edit menu item
+    const editItem = await screen.findByRole('menuitem', { name: /edit/i });
+    await user.click(editItem);
 
     expect(mockOnEdit).toHaveBeenCalledWith(mockTodo);
   });
 
-  it('should call onDelete when delete button is clicked', () => {
+  it('should call onDelete when delete menu item is clicked', async () => {
+    const user = userEvent.setup();
     render(
       <TodoItem
         todo={mockTodo}
@@ -193,8 +201,13 @@ describe('TodoItem', () => {
       />
     );
 
-    const deleteButton = screen.getByLabelText('Delete "Test Todo"');
-    fireEvent.click(deleteButton);
+    // Open dropdown menu using userEvent for better Radix UI support
+    const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+    await user.click(menuButton);
+
+    // Click Delete menu item
+    const deleteItem = await screen.findByRole('menuitem', { name: /delete/i });
+    await user.click(deleteItem);
 
     expect(mockOnDelete).toHaveBeenCalledWith('todo-1');
   });
