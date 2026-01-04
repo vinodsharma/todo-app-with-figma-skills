@@ -22,6 +22,8 @@ const mockTodo = {
   createdAt: new Date(),
   updatedAt: new Date(),
   parentId: null,
+  recurrenceRule: null,
+  recurrenceEnd: null,
 };
 
 describe('TodoItem', () => {
