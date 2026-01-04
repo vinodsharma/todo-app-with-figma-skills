@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Priority } from '@prisma/client';
+import { getNextOccurrence } from '@/lib/recurrence';
 
 export async function PATCH(
   request: Request,
@@ -66,6 +67,32 @@ export async function PATCH(
         );
       }
       updateData.completed = completed;
+
+      // If completing a recurring todo, create the next occurrence
+      if (completed === true && existingTodo.recurrenceRule) {
+        const nextDate = getNextOccurrence(
+          existingTodo.recurrenceRule,
+          existingTodo.dueDate || new Date(),
+          existingTodo.recurrenceEnd
+        );
+
+        if (nextDate) {
+          // Create new todo with same properties and next due date
+          await prisma.todo.create({
+            data: {
+              title: existingTodo.title,
+              description: existingTodo.description,
+              priority: existingTodo.priority,
+              categoryId: existingTodo.categoryId,
+              userId: existingTodo.userId,
+              dueDate: nextDate,
+              recurrenceRule: existingTodo.recurrenceRule,
+              recurrenceEnd: existingTodo.recurrenceEnd,
+              completed: false,
+            },
+          });
+        }
+      }
     }
 
     if (priority !== undefined) {
@@ -92,6 +119,14 @@ export async function PATCH(
       } else {
         updateData.categoryId = categoryId;
       }
+    }
+
+    if (body.recurrenceRule !== undefined) {
+      updateData.recurrenceRule = body.recurrenceRule;
+    }
+
+    if (body.recurrenceEnd !== undefined) {
+      updateData.recurrenceEnd = body.recurrenceEnd ? new Date(body.recurrenceEnd) : null;
     }
 
     // Update the todo
