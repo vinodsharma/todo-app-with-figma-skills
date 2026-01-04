@@ -16,6 +16,8 @@ interface UseTodosReturn {
   updateTodo: (id: string, input: UpdateTodoInput) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
   toggleTodo: (id: string) => Promise<void>;
+  skipRecurrence: (id: string) => Promise<void>;
+  stopRecurrence: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -179,6 +181,34 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     await updateTodo(id, { completed: !todo.completed });
   };
 
+  const skipRecurrence = async (id: string) => {
+    // Complete without creating next occurrence by first removing recurrence, then completing
+    try {
+      // Temporarily remove recurrence rule
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: true, recurrenceRule: null }),
+      });
+      if (!response.ok) throw new Error('Failed to skip');
+      await fetchTodos();
+      toast.success('Occurrence skipped');
+    } catch (error) {
+      toast.error('Failed to skip occurrence');
+      throw error;
+    }
+  };
+
+  const stopRecurrence = async (id: string) => {
+    try {
+      await updateTodo(id, { recurrenceRule: null, recurrenceEnd: null });
+      toast.success('Recurrence stopped');
+    } catch (error) {
+      toast.error('Failed to stop recurrence');
+      throw error;
+    }
+  };
+
   return {
     todos,
     isLoading,
@@ -186,6 +216,8 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     updateTodo,
     deleteTodo,
     toggleTodo,
+    skipRecurrence,
+    stopRecurrence,
     refetch: fetchTodos,
   };
 }

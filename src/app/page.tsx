@@ -53,7 +53,7 @@ export default function Home() {
 
   const { categories, createCategory: createCategoryHook, deleteCategory, refetch: refetchCategories } = useCategories();
   // Wait for sort preference to load before fetching todos to avoid race condition
-  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, refetch: fetchTodos } = useTodos({
+  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, skipRecurrence, stopRecurrence, refetch: fetchTodos } = useTodos({
     filters: queryParams,
     enabled: sortLoaded,
   });
@@ -97,6 +97,15 @@ export default function Home() {
   const handleEditTodo = async (id: string, input: Parameters<typeof updateTodo>[1]) => {
     await updateTodo(id, input);
     await refetchCategories();
+  };
+
+  const handleSkipRecurrence = async (id: string) => {
+    await skipRecurrence(id);
+    await refetchCategories();
+  };
+
+  const handleStopRecurrence = async (id: string) => {
+    await stopRecurrence(id);
   };
 
   const handleAddSubtask = async (parentId: string, title: string) => {
@@ -171,6 +180,8 @@ export default function Home() {
             onEditClick={handleEditClick}
             onDelete={handleDeleteTodo}
             onAddSubtask={handleAddSubtask}
+            onSkipRecurrence={handleSkipRecurrence}
+            onStopRecurrence={handleStopRecurrence}
           />
         </main>
       </div>
