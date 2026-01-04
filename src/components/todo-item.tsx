@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, FileText } from "lucide-react";
+import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, FileText, Repeat } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Todo, Priority } from "@/types";
+import { getRecurrenceDescription } from "@/lib/recurrence";
 import { SubtaskItem } from "./subtask-item";
 import { AddSubtaskInput } from "./add-subtask-input";
 
@@ -158,6 +159,17 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete, onAddSubtask, isSel
                 {format(new Date(todo.dueDate), "MMM d, yyyy")}
                 {isOverdue && " (Overdue)"}
               </span>
+            </div>
+          )}
+
+          {/* Recurrence indicator */}
+          {todo.recurrenceRule && (
+            <div
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+              title={getRecurrenceDescription(todo.recurrenceRule)}
+            >
+              <Repeat className="h-3 w-3" />
+              <span className="sr-only">{getRecurrenceDescription(todo.recurrenceRule)}</span>
             </div>
           )}
 
