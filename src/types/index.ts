@@ -34,6 +34,9 @@ export interface Todo {
   _count?: {
     subtasks: number;
   };
+  // Recurrence fields
+  recurrenceRule: string | null;
+  recurrenceEnd: string | null;
 }
 
 // Input types for creating todos
@@ -44,6 +47,8 @@ export interface CreateTodoInput {
   dueDate?: string;
   categoryId?: string;
   parentId?: string;
+  recurrenceRule?: string;
+  recurrenceEnd?: string;
 }
 
 // Input types for updating todos
@@ -54,6 +59,8 @@ export interface UpdateTodoInput {
   priority?: Priority;
   dueDate?: string;
   categoryId?: string;
+  recurrenceRule?: string | null;
+  recurrenceEnd?: string | null;
 }
 
 // Input types for creating categories
