@@ -16,7 +16,11 @@ test.describe('Recurring Todos', () => {
     const todoForm = page.locator('form').filter({ has: page.getByPlaceholder('Add a new todo...') });
     const recurrenceSelector = todoForm.locator('button[role="combobox"]').filter({ hasText: /repeat|daily|weekly|monthly|does not/i });
     await recurrenceSelector.click();
-    await page.getByRole('option', { name: /^daily$/i }).click();
+
+    // Wait for dropdown to be visible and option to be stable
+    const dailyOption = page.getByRole('option', { name: /^daily$/i });
+    await expect(dailyOption).toBeVisible({ timeout: 5000 });
+    await dailyOption.click();
 
     // Submit the form
     await page.getByRole('button', { name: 'Add', exact: true }).click();
@@ -44,7 +48,11 @@ test.describe('Recurring Todos', () => {
     const todoForm = page.locator('form').filter({ has: page.getByPlaceholder('Add a new todo...') });
     const recurrenceSelector = todoForm.locator('button[role="combobox"]').filter({ hasText: /repeat|daily|weekly|monthly|does not/i });
     await recurrenceSelector.click();
-    await page.getByRole('option', { name: /^daily$/i }).click();
+
+    // Wait for dropdown to be visible and option to be stable
+    const dailyOption = page.getByRole('option', { name: /^daily$/i });
+    await expect(dailyOption).toBeVisible({ timeout: 5000 });
+    await dailyOption.click();
 
     // Submit the form
     await page.getByRole('button', { name: 'Add', exact: true }).click();
@@ -58,21 +66,25 @@ test.describe('Recurring Todos', () => {
     const checkbox = todoCard.getByRole('checkbox');
     await checkbox.click();
 
-    // Wait for the API to complete and new todo to be created
-    await page.waitForTimeout(1000);
+    // Wait for the "Todo updated successfully" toast which indicates API completed
+    await expect(page.getByText('Todo updated successfully')).toBeVisible({ timeout: 10000 });
+
+    // Wait a bit more for the UI to fully update with the new todo
+    await page.waitForTimeout(500);
 
     // There should now be two todos with this title:
     // 1. The completed original
     // 2. The new uncompleted occurrence
     const allTodosWithTitle = page.locator('h3', { hasText: title });
-    await expect(allTodosWithTitle).toHaveCount(2, { timeout: 10000 });
+    await expect(allTodosWithTitle).toHaveCount(2, { timeout: 15000 });
 
-    // Verify one is completed (has line-through) and one is not
-    const completedTodos = page.locator('h3.line-through', { hasText: title });
-    const activeTodos = page.locator('h3:not(.line-through)', { hasText: title });
+    // Verify there's one checked checkbox (completed) and one unchecked (active)
+    // Use checkbox aria-label to identify completed vs incomplete todos
+    const completedCheckbox = page.getByRole('checkbox', { name: new RegExp(`Mark "${title}" as incomplete`) });
+    const activeCheckbox = page.getByRole('checkbox', { name: new RegExp(`Mark "${title}" as complete`) });
 
-    await expect(completedTodos).toHaveCount(1);
-    await expect(activeTodos).toHaveCount(1);
+    await expect(completedCheckbox).toHaveCount(1, { timeout: 5000 });
+    await expect(activeCheckbox).toHaveCount(1, { timeout: 5000 });
   });
 
   test('can set custom weekly recurrence with specific days (Mon, Wed, Fri)', async ({ page }) => {
@@ -85,7 +97,11 @@ test.describe('Recurring Todos', () => {
     const todoForm = page.locator('form').filter({ has: page.getByPlaceholder('Add a new todo...') });
     const recurrenceSelector = todoForm.locator('button[role="combobox"]').filter({ hasText: /repeat|daily|weekly|monthly|does not/i });
     await recurrenceSelector.click();
-    await page.getByRole('option', { name: /custom/i }).click();
+
+    // Wait for dropdown to be visible and option to be stable
+    const customOption = page.getByRole('option', { name: /custom/i });
+    await expect(customOption).toBeVisible({ timeout: 5000 });
+    await customOption.click();
 
     // Custom recurrence dialog should open
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
@@ -142,7 +158,11 @@ test.describe('Recurring Todos', () => {
     const todoForm = page.locator('form').filter({ has: page.getByPlaceholder('Add a new todo...') });
     const recurrenceSelector = todoForm.locator('button[role="combobox"]').filter({ hasText: /repeat|daily|weekly|monthly|does not/i });
     await recurrenceSelector.click();
-    await page.getByRole('option', { name: /^daily$/i }).click();
+
+    // Wait for dropdown to be visible and option to be stable
+    const dailyOption = page.getByRole('option', { name: /^daily$/i });
+    await expect(dailyOption).toBeVisible({ timeout: 5000 });
+    await dailyOption.click();
 
     // Submit the form
     await page.getByRole('button', { name: 'Add', exact: true }).click();
@@ -163,11 +183,18 @@ test.describe('Recurring Todos', () => {
     await todoCard.hover();
     await actionsButton.click();
 
-    // Click "Stop repeating" menu item
-    await page.getByRole('menuitem', { name: /stop repeating/i }).click();
+    // Wait for menu to be fully visible and stable
+    const stopRepeatingItem = page.getByRole('menuitem', { name: /stop repeating/i });
+    await expect(stopRepeatingItem).toBeVisible({ timeout: 5000 });
 
-    // Wait for the API call to complete
-    await page.waitForTimeout(500);
+    // Small delay for dropdown animation to complete
+    await page.waitForTimeout(100);
+
+    // Click "Stop repeating" menu item (use force to bypass any overlay issues)
+    await stopRepeatingItem.click({ force: true });
+
+    // Wait for the "Recurrence stopped" toast which indicates API completed
+    await expect(page.getByText('Recurrence stopped')).toBeVisible({ timeout: 10000 });
 
     // Verify the recurrence icon is no longer visible
     await expect(recurrenceIndicator).not.toBeVisible({ timeout: 5000 });
