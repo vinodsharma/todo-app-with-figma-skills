@@ -12,20 +12,21 @@ test.describe('Drag and Drop Reordering', () => {
     // Create a todo
     await page.getByPlaceholder('Add a new todo...').fill(title);
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h3', { hasText: title })).toBeVisible({ timeout: 5000 });
 
     // Find the todo card
     const todoTitle = page.locator('h3', { hasText: title });
     const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Check drag handle is visible
-    const dragHandle = todoCard.getByRole('button', { name: 'Drag to reorder' });
+    // Check drag handle is visible (use first() since there may be multiple handles)
+    const dragHandle = page.getByRole('button', { name: 'Drag to reorder' }).first();
     await expect(dragHandle).toBeVisible();
 
-    // Cleanup - delete the todo
+    // Cleanup - delete the todo using dropdown menu
     await todoCard.hover();
-    const deleteButton = todoCard.locator('button[aria-label^="Delete "]');
-    await deleteButton.click();
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click();
+    await page.getByRole('menuitem', { name: /delete/i }).click();
     await expect(page.locator('h3', { hasText: title })).not.toBeVisible({ timeout: 5000 });
   });
 
@@ -50,13 +51,14 @@ test.describe('Drag and Drop Reordering', () => {
 
     expect(secondIndex).toBeLessThan(firstIndex);
 
-    // Cleanup - delete both todos
+    // Cleanup - delete both todos using dropdown menu
     for (const title of [secondTitle, firstTitle]) {
       const todoTitle = page.locator('h3', { hasText: title });
       const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
       await todoCard.hover();
-      const deleteButton = todoCard.locator('button[aria-label^="Delete "]');
-      await deleteButton.click();
+      const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+      await actionsButton.click();
+      await page.getByRole('menuitem', { name: /delete/i }).click();
       await expect(page.locator('h3', { hasText: title })).not.toBeVisible({ timeout: 5000 });
     }
   });
@@ -67,27 +69,31 @@ test.describe('Drag and Drop Reordering', () => {
     // Create todo
     await page.getByPlaceholder('Add a new todo...').fill(title);
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h3', { hasText: title })).toBeVisible({ timeout: 5000 });
 
     // Find the todo card
     const todoTitle = page.locator('h3', { hasText: title });
     const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Focus the drag handle
-    const dragHandle = todoCard.getByRole('button', { name: 'Drag to reorder' });
+    // Focus the drag handle (use first() since there may be multiple handles)
+    const dragHandle = page.getByRole('button', { name: 'Drag to reorder' }).first();
     await dragHandle.focus();
 
     // Press space to pick up, then Escape to cancel
     await page.keyboard.press('Space');
     await page.keyboard.press('Escape');
 
-    // Todo should still be there
-    await expect(page.getByText(title)).toBeVisible();
+    // Wait for drag overlay to disappear
+    await page.waitForTimeout(300);
 
-    // Cleanup
-    await todoCard.hover();
-    const deleteButton = todoCard.locator('button[aria-label^="Delete "]');
-    await deleteButton.click();
+    // Todo should still be there
+    await expect(page.locator('h3', { hasText: title })).toBeVisible();
+
+    // Cleanup using dropdown menu (use force due to drag overlay)
+    await todoCard.hover({ force: true });
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click({ force: true });
+    await page.getByRole('menuitem', { name: /delete/i }).click({ force: true });
     await expect(page.locator('h3', { hasText: title })).not.toBeVisible({ timeout: 5000 });
   });
 
@@ -97,20 +103,21 @@ test.describe('Drag and Drop Reordering', () => {
     // Create todo
     await page.getByPlaceholder('Add a new todo...').fill(title);
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h3', { hasText: title })).toBeVisible({ timeout: 5000 });
 
     // Find the todo card
     const todoTitle = page.locator('h3', { hasText: title });
     const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Check drag handle has cursor-grab class
-    const dragHandle = todoCard.getByRole('button', { name: 'Drag to reorder' });
+    // Check drag handle has cursor-grab class (use first() since there may be multiple handles)
+    const dragHandle = page.getByRole('button', { name: 'Drag to reorder' }).first();
     await expect(dragHandle).toHaveClass(/cursor-grab/);
 
-    // Cleanup
+    // Cleanup using dropdown menu
     await todoCard.hover();
-    const deleteButton = todoCard.locator('button[aria-label^="Delete "]');
-    await deleteButton.click();
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click();
+    await page.getByRole('menuitem', { name: /delete/i }).click();
     await expect(page.locator('h3', { hasText: title })).not.toBeVisible({ timeout: 5000 });
   });
 });

@@ -176,10 +176,16 @@ test.describe('Responsive Layout', () => {
     await todoInput.press('Enter');
     await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
 
-    // Find the edit button using aria-label that includes the todo title
-    // Use force:true on mobile where elements may overlap
-    const editButton = page.getByRole('button', { name: new RegExp(`Edit.*${todoTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i') });
-    await editButton.click({ force: true });
+    // Find the todo card and open dropdown menu
+    const todoTitleEl = page.locator('h3', { hasText: todoTitle });
+    const todoCard = todoTitleEl.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
+    // Use force for hover on mobile where elements may intercept pointer events
+    await todoCard.hover({ force: true });
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click({ force: true });
+
+    // Click edit in dropdown (use force for mobile where menus may be outside viewport)
+    await page.getByRole('menuitem', { name: /edit/i }).click({ force: true });
 
     // Dialog should be visible
     const dialog = page.getByRole('dialog');
@@ -204,10 +210,16 @@ test.describe('Responsive Layout', () => {
     await todoInput.press('Enter');
     await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
 
-    // Find the delete button using aria-label that includes the todo title
-    // Use force:true on mobile where elements may overlap
-    const deleteButton = page.getByRole('button', { name: new RegExp(`Delete.*${todoTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i') });
-    await deleteButton.click({ force: true });
+    // Find the todo card and open dropdown menu
+    const todoTitleEl = page.locator('h3', { hasText: todoTitle });
+    const todoCard = todoTitleEl.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
+    // Use force for hover on mobile where elements may intercept pointer events
+    await todoCard.hover({ force: true });
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click({ force: true });
+
+    // Click delete in dropdown (use force for mobile where menus may be outside viewport)
+    await page.getByRole('menuitem', { name: /delete/i }).click({ force: true });
 
     // Wait for deletion
     await page.waitForTimeout(500);
