@@ -78,9 +78,11 @@ model Category {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   todos     Todo[]
   createdAt DateTime @default(now())
+  sortOrder Int      @default(0)  // Lower = higher in sidebar
 
   @@unique([userId, name])
   @@index([userId])
+  @@index([userId, sortOrder])  // For efficient sorted queries
 }
 
 model Todo {
@@ -96,6 +98,7 @@ model Todo {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  sortOrder   Int       @default(0)  // Lower = higher in list (top)
 
   // Recurrence fields
   recurrenceRule  String?    // iCal RRULE format, e.g. "FREQ=WEEKLY;BYDAY=MO,WE,FR"
@@ -109,4 +112,5 @@ model Todo {
   @@index([userId])
   @@index([categoryId])
   @@index([parentId])
+  @@index([userId, categoryId, sortOrder])  // For efficient sorted queries
 }
