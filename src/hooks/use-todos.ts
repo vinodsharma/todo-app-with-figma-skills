@@ -18,6 +18,7 @@ interface UseTodosReturn {
   toggleTodo: (id: string) => Promise<void>;
   skipRecurrence: (id: string) => Promise<void>;
   stopRecurrence: (id: string) => Promise<void>;
+  reorderTodo: (todoId: string, newSortOrder: number, newCategoryId?: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -209,6 +210,41 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     }
   };
 
+  const reorderTodo = async (todoId: string, newSortOrder: number, newCategoryId?: string) => {
+    const originalTodos = [...todos];
+
+    try {
+      const todoIndex = todos.findIndex(t => t.id === todoId);
+      if (todoIndex === -1) return;
+
+      const updatedTodos = [...todos];
+      const [movedTodo] = updatedTodos.splice(todoIndex, 1);
+
+      if (newCategoryId !== undefined) {
+        movedTodo.categoryId = newCategoryId;
+      }
+
+      updatedTodos.splice(newSortOrder, 0, movedTodo);
+      setTodos(updatedTodos);
+
+      const response = await fetch('/api/todos/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ todoId, newSortOrder, newCategoryId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reorder todo');
+      }
+
+      await fetchTodos();
+    } catch (error) {
+      setTodos(originalTodos);
+      toast.error('Failed to reorder todo');
+      console.error('Error reordering todo:', error);
+    }
+  };
+
   return {
     todos,
     isLoading,
@@ -218,6 +254,7 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     toggleTodo,
     skipRecurrence,
     stopRecurrence,
+    reorderTodo,
     refetch: fetchTodos,
   };
 }

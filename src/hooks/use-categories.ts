@@ -9,6 +9,7 @@ interface UseCategoriesReturn {
   isLoading: boolean;
   createCategory: (input: CreateCategoryInput) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  reorderCategory: (categoryId: string, newSortOrder: number) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -81,11 +82,42 @@ export function useCategories(): UseCategoriesReturn {
     }
   };
 
+  const reorderCategory = async (categoryId: string, newSortOrder: number) => {
+    const originalCategories = [...categories];
+
+    try {
+      const categoryIndex = categories.findIndex(c => c.id === categoryId);
+      if (categoryIndex === -1) return;
+
+      const updatedCategories = [...categories];
+      const [movedCategory] = updatedCategories.splice(categoryIndex, 1);
+      updatedCategories.splice(newSortOrder, 0, movedCategory);
+      setCategories(updatedCategories);
+
+      const response = await fetch('/api/categories/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId, newSortOrder }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reorder category');
+      }
+
+      await fetchCategories();
+    } catch (error) {
+      setCategories(originalCategories);
+      toast.error('Failed to reorder category');
+      console.error('Error reordering category:', error);
+    }
+  };
+
   return {
     categories,
     isLoading,
     createCategory,
     deleteCategory,
+    reorderCategory,
     refetch: fetchCategories,
   };
 }
