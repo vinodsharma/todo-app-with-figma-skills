@@ -6,6 +6,7 @@ import { TodoItem } from "@/components/todo-item";
 import { EditTodoDialog } from "@/components/edit-todo-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, Circle, ListTodo, Search } from "lucide-react";
+import { SortableTodoList } from '@/components/dnd';
 
 interface TodoListProps {
   todos: Todo[];
@@ -143,21 +144,17 @@ export function TodoList({
               ({activeTodos.length})
             </span>
           </div>
-          <div className="space-y-2">
-            {activeTodos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                isSelected={selectedIndex === todoIndexMap.get(todo.id)}
-                onToggle={onToggle}
-                onEdit={handleEditClick}
-                onDelete={onDelete}
-                onAddSubtask={onAddSubtask}
-                onSkipRecurrence={onSkipRecurrence}
-                onStopRecurrence={onStopRecurrence}
-              />
-            ))}
-          </div>
+          <SortableTodoList
+            todos={activeTodos}
+            onToggle={onToggle}
+            onEdit={handleEditClick}
+            onDelete={onDelete}
+            onAddSubtask={onAddSubtask}
+            onSkipRecurrence={onSkipRecurrence}
+            onStopRecurrence={onStopRecurrence}
+            selectedIndex={selectedIndex}
+            todoIndexMap={todoIndexMap}
+          />
         </div>
       )}
 
@@ -169,21 +166,17 @@ export function TodoList({
             <span>Completed</span>
             <span>({completedTodos.length})</span>
           </div>
-          <div className="space-y-2">
-            {completedTodos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                isSelected={selectedIndex === todoIndexMap.get(todo.id)}
-                onToggle={onToggle}
-                onEdit={handleEditClick}
-                onDelete={onDelete}
-                onAddSubtask={onAddSubtask}
-                onSkipRecurrence={onSkipRecurrence}
-                onStopRecurrence={onStopRecurrence}
-              />
-            ))}
-          </div>
+          <SortableTodoList
+            todos={completedTodos}
+            onToggle={onToggle}
+            onEdit={handleEditClick}
+            onDelete={onDelete}
+            onAddSubtask={onAddSubtask}
+            onSkipRecurrence={onSkipRecurrence}
+            onStopRecurrence={onStopRecurrence}
+            selectedIndex={selectedIndex}
+            todoIndexMap={todoIndexMap}
+          />
         </div>
       )}
 
