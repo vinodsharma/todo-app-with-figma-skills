@@ -10,6 +10,7 @@ export interface Category {
   color: string;
   userId: string;
   createdAt: Date;
+  sortOrder: number;
   _count?: {
     todos: number;
   };
@@ -28,6 +29,7 @@ export interface Todo {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
+  sortOrder: number;
   // Subtasks support
   parentId: string | null;
   subtasks?: Todo[];
@@ -105,4 +107,16 @@ export interface TodoQueryParams {
   categoryId?: string;
   sortBy?: SortField;
   sortDirection?: SortDirection;
+}
+
+// Input types for reordering
+export interface ReorderTodoInput {
+  todoId: string;
+  newSortOrder: number;
+  newCategoryId?: string;  // For cross-category moves
+}
+
+export interface ReorderCategoryInput {
+  categoryId: string;
+  newSortOrder: number;
 }
