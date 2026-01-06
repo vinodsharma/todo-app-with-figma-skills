@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { List, Trash2 } from "lucide-react"
+import { List } from "lucide-react"
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Category } from "@/types"
 import { Button } from "@/components/ui/button"
 import { AddCategoryDialog } from "@/components/add-category-dialog"
+import { SortableCategory } from '@/components/dnd';
 import { cn } from "@/lib/utils"
 
 interface CategorySidebarProps {
@@ -70,50 +72,24 @@ export function CategorySidebar({
 
       {/* Category List */}
       <div className="flex-1 space-y-1 overflow-y-auto">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            className="relative"
-            onMouseEnter={() => setHoveredCategoryId(category.id)}
-            onMouseLeave={() => setHoveredCategoryId(null)}
-          >
-            <Button
-              variant={
-                selectedCategoryId === category.id ? "secondary" : "ghost"
-              }
-              className={cn(
-                "w-full justify-start gap-2 pr-8",
-                selectedCategoryId === category.id && "bg-secondary"
-              )}
-              onClick={() => onSelectCategory(category.id)}
-            >
-              <div
-                className="size-3 rounded-full"
-                style={{ backgroundColor: category.color }}
-              />
-              <span className="flex-1 truncate text-left">
-                {category.name}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {category._count?.todos ?? 0}
-              </span>
-            </Button>
-
-            {/* Delete Button */}
-            {hoveredCategoryId === category.id && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive"
-                onClick={(e) => handleDeleteCategory(category.id, e)}
-                disabled={deletingCategoryId === category.id}
-              >
-                <Trash2 className="size-4" />
-                <span className="sr-only">Delete {category.name}</span>
-              </Button>
-            )}
-          </div>
-        ))}
+        <SortableContext
+          items={categories.map(c => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {categories.map((category) => (
+            <SortableCategory
+              key={category.id}
+              category={category}
+              isSelected={selectedCategoryId === category.id}
+              isHovered={hoveredCategoryId === category.id}
+              isDeleting={deletingCategoryId === category.id}
+              onSelect={() => onSelectCategory(category.id)}
+              onDelete={(e) => handleDeleteCategory(category.id, e)}
+              onMouseEnter={() => setHoveredCategoryId(category.id)}
+              onMouseLeave={() => setHoveredCategoryId(null)}
+            />
+          ))}
+        </SortableContext>
       </div>
 
       {/* Add Category Dialog */}
