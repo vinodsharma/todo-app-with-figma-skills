@@ -112,17 +112,18 @@ export async function GET(request: Request) {
       }
     }
 
-    // Build orderBy clause based on sortBy param
-    // Always keep completed items last, then apply user's sort preference
+    // Build orderBy clause - default to sortOrder
     type OrderByClause = { [key: string]: 'asc' | 'desc' };
-    const orderBy: OrderByClause[] = [{ completed: 'asc' }];
+    const orderBy: OrderByClause[] = [
+      { completed: 'asc' },
+      { sortOrder: 'asc' },  // Primary sort by manual order
+    ];
 
-    // Add secondary sort based on sortBy param (priority and title are handled separately in JS)
+    // Only override if user explicitly requests a different sort
     if (sortBy && sortBy !== 'priority' && sortBy !== 'title') {
+      orderBy.length = 0;
+      orderBy.push({ completed: 'asc' });
       orderBy.push({ [sortBy]: sortDirection });
-    } else if (!sortBy) {
-      // Default to createdAt desc
-      orderBy.push({ createdAt: 'desc' });
     }
 
     let todos = await prisma.todo.findMany({
@@ -265,6 +266,19 @@ export async function POST(request: Request) {
     } else if (categoryId) {
       todoData.categoryId = categoryId;
     }
+
+    // Shift existing todos down to make room at top
+    await prisma.todo.updateMany({
+      where: {
+        userId: session.user.id,
+        categoryId: todoData.categoryId || null,
+        parentId: todoData.parentId || null,
+      },
+      data: { sortOrder: { increment: 1 } },
+    });
+
+    // New todos go at the top (sortOrder 0)
+    todoData.sortOrder = 0;
 
     const todo = await prisma.todo.create({
       data: todoData,
