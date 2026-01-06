@@ -22,7 +22,7 @@ export async function GET(request: Request) {
         },
       },
       orderBy: {
-        name: 'asc',
+        sortOrder: 'asc',
       },
     });
 
@@ -71,12 +71,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // Shift existing categories down
+    await prisma.category.updateMany({
+      where: { userId: session.user.id },
+      data: { sortOrder: { increment: 1 } },
+    });
+
     // Create category with default color if not provided
     const category = await prisma.category.create({
       data: {
         name: name.trim(),
         color: color || '#6b7280',
         userId: session.user.id,
+        sortOrder: 0,
       },
       include: {
         _count: {
