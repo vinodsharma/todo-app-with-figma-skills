@@ -8,6 +8,7 @@ import { TodoList } from '@/components/todo-list';
 import { SearchFilterBar, SearchBarFilters, defaultFilters } from '@/components/search-filter-bar';
 import { EditTodoDialog } from '@/components/edit-todo-dialog';
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
+import { DndProvider } from '@/components/dnd';
 import { useTodos } from '@/hooks/use-todos';
 import { useCategories } from '@/hooks/use-categories';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -51,9 +52,9 @@ export default function Home() {
     return params;
   }, [debouncedSearch, selectedCategoryId, filters.priority, filters.status, filters.dueDate, sortOption]);
 
-  const { categories, createCategory: createCategoryHook, deleteCategory, refetch: refetchCategories } = useCategories();
+  const { categories, createCategory: createCategoryHook, deleteCategory, reorderCategory, refetch: refetchCategories } = useCategories();
   // Wait for sort preference to load before fetching todos to avoid race condition
-  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, skipRecurrence, stopRecurrence, refetch: fetchTodos } = useTodos({
+  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, skipRecurrence, stopRecurrence, reorderTodo, refetch: fetchTodos } = useTodos({
     filters: queryParams,
     enabled: sortLoaded,
   });
@@ -146,59 +147,75 @@ export default function Home() {
     setSelectedCategoryId(categoryId);
   };
 
+  const handleReorderTodo = async (todoId: string, newIndex: number, newCategoryId?: string) => {
+    await reorderTodo(todoId, newIndex, newCategoryId);
+    if (newCategoryId) {
+      await refetchCategories();
+    }
+  };
+
+  const handleReorderCategory = async (categoryId: string, newIndex: number) => {
+    await reorderCategory(categoryId, newIndex);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <div className="flex flex-1">
-        <CategorySidebar
-          categories={categories}
-          selectedCategoryId={selectedCategoryId}
-          onSelectCategory={handleSelectCategory}
-          onAddCategory={handleAddCategory}
-          onDeleteCategory={deleteCategory}
-        />
-        <main className="flex-1 p-6 space-y-4">
-          <TodoForm
+    <DndProvider
+      onTodoReorder={handleReorderTodo}
+      onCategoryReorder={handleReorderCategory}
+    >
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex flex-1">
+          <CategorySidebar
             categories={categories}
-            selectedCategoryId={selectedCategoryId || undefined}
-            onSubmit={handleCreateTodo}
+            selectedCategoryId={selectedCategoryId}
+            onSelectCategory={handleSelectCategory}
+            onAddCategory={handleAddCategory}
+            onDeleteCategory={deleteCategory}
           />
-          <SearchFilterBar
-            filters={filters}
-            onFiltersChange={setFilters}
-            sortOption={sortOption}
-            onSortChange={setSortOption}
-          />
-          <TodoList
-            todos={todos}
+          <main className="flex-1 p-6 space-y-4">
+            <TodoForm
+              categories={categories}
+              selectedCategoryId={selectedCategoryId || undefined}
+              onSubmit={handleCreateTodo}
+            />
+            <SearchFilterBar
+              filters={filters}
+              onFiltersChange={setFilters}
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+            />
+            <TodoList
+              todos={todos}
+              categories={categories}
+              isLoading={isLoading}
+              hasActiveFilters={hasActiveFilters}
+              selectedIndex={selectedIndex}
+              onToggle={handleToggleTodo}
+              onEdit={handleEditTodo}
+              onEditClick={handleEditClick}
+              onDelete={handleDeleteTodo}
+              onAddSubtask={handleAddSubtask}
+              onSkipRecurrence={handleSkipRecurrence}
+              onStopRecurrence={handleStopRecurrence}
+            />
+          </main>
+        </div>
+
+        {/* Edit Dialog (triggered by keyboard shortcut 'e') */}
+        {editingTodo && (
+          <EditTodoDialog
+            todo={editingTodo}
             categories={categories}
-            isLoading={isLoading}
-            hasActiveFilters={hasActiveFilters}
-            selectedIndex={selectedIndex}
-            onToggle={handleToggleTodo}
-            onEdit={handleEditTodo}
-            onEditClick={handleEditClick}
-            onDelete={handleDeleteTodo}
-            onAddSubtask={handleAddSubtask}
-            onSkipRecurrence={handleSkipRecurrence}
-            onStopRecurrence={handleStopRecurrence}
+            open={!!editingTodo}
+            onOpenChange={(open) => !open && setEditingTodo(null)}
+            onSave={handleEditTodo}
           />
-        </main>
+        )}
+
+        {/* Keyboard Shortcuts Help Dialog (triggered by '?') */}
+        <KeyboardShortcutsDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
       </div>
-
-      {/* Edit Dialog (triggered by keyboard shortcut 'e') */}
-      {editingTodo && (
-        <EditTodoDialog
-          todo={editingTodo}
-          categories={categories}
-          open={!!editingTodo}
-          onOpenChange={(open) => !open && setEditingTodo(null)}
-          onSave={handleEditTodo}
-        />
-      )}
-
-      {/* Keyboard Shortcuts Help Dialog (triggered by '?') */}
-      <KeyboardShortcutsDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
-    </div>
+    </DndProvider>
   );
 }

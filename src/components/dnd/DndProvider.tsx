@@ -12,7 +12,6 @@ import {
   useSensors,
   DragStartEvent,
   DragEndEvent,
-  DragCancelEvent,
   UniqueIdentifier,
   Announcements,
 } from '@dnd-kit/core';

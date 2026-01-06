@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Todo, Category, UpdateTodoInput } from "@/types";
-import { TodoItem } from "@/components/todo-item";
 import { EditTodoDialog } from "@/components/edit-todo-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, Circle, ListTodo, Search } from "lucide-react";
