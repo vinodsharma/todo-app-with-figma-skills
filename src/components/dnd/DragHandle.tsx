@@ -1,11 +1,13 @@
 'use client';
 
+import { DraggableAttributes } from '@dnd-kit/core';
+import { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DragHandleProps {
-  listeners?: Record<string, Function>;
-  attributes?: Record<string, unknown>;
+  listeners?: SyntheticListenerMap;
+  attributes?: DraggableAttributes;
   className?: string;
   isDragging?: boolean;
 }
