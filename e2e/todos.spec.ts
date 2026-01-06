@@ -99,11 +99,13 @@ test.describe('Todo CRUD', () => {
     const todoTitle = page.locator('h3', { hasText: title });
     const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Hover and click delete - the button has aria-label like 'Delete "Title..."'
+    // Hover and open dropdown menu
     await todoCard.hover();
-    // Use aria-label that starts with "Delete " to avoid matching checkbox/edit with "Delete Me" in title
-    const deleteButton = todoCard.locator('button[aria-label^="Delete "]');
-    await deleteButton.click();
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click();
+
+    // Click delete in dropdown
+    await page.getByRole('menuitem', { name: /delete/i }).click();
 
     // Verify it's gone
     await expect(page.locator('h3', { hasText: title })).not.toBeVisible({ timeout: 5000 });
@@ -122,11 +124,13 @@ test.describe('Todo CRUD', () => {
     const todoTitle = page.locator('h3', { hasText: title });
     const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Hover and click edit - the button has aria-label like 'Edit "Title..."'
+    // Hover and open dropdown menu
     await todoCard.hover();
-    // Use aria-label that starts with "Edit " to avoid matching other elements
-    const editButton = todoCard.locator('button[aria-label^="Edit "]');
-    await editButton.click();
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click();
+
+    // Click edit in dropdown
+    await page.getByRole('menuitem', { name: /edit/i }).click();
 
     // Edit dialog should open
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -157,11 +161,13 @@ test.describe('Todo CRUD', () => {
     const todoTitle = page.locator('h3', { hasText: title });
     const todoCard = todoTitle.locator('xpath=ancestor::div[contains(@class, "rounded-lg")]').first();
 
-    // Hover and click edit
+    // Hover and open dropdown menu
     await todoCard.hover();
-    // Use aria-label that starts with "Edit " to avoid matching other elements
-    const editButton = todoCard.locator('button[aria-label^="Edit "]');
-    await editButton.click();
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click();
+
+    // Click edit in dropdown
+    await page.getByRole('menuitem', { name: /edit/i }).click();
 
     // Add notes
     const notesTextarea = page.getByRole('dialog').getByLabel(/description|notes/i);
