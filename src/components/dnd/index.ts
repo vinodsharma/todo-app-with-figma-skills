@@ -3,3 +3,4 @@ export type { DragItem, DragItemType } from './DndProvider';
 export { DragHandle } from './DragHandle';
 export { SortableTodoItem } from './SortableTodoItem';
 export { SortableTodoList } from './SortableTodoList';
+export { SortableCategory } from './SortableCategory';
