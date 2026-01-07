@@ -110,8 +110,18 @@ test.describe('Calendar View', () => {
   test('displays todos on their due dates in calendar', async ({ page }) => {
     const todoTitle = uniqueTitle('Calendar Due Date');
 
-    // Create a todo in list view first with title only (no due date)
+    // Create a todo with today's due date in list view
     await page.getByPlaceholder('Add a new todo...').fill(todoTitle);
+
+    // Click the due date button in the form to open date picker
+    const form = page.locator('form');
+    await form.getByRole('button', { name: /due date/i }).click();
+
+    // Select today's date in the date picker popover
+    const today = new Date().getDate().toString();
+    await page.getByRole('gridcell', { name: today, exact: true }).click();
+
+    // Submit the form
     await page.getByRole('button', { name: 'Add', exact: true }).click();
 
     // Wait for todo to appear in list
@@ -120,12 +130,10 @@ test.describe('Calendar View', () => {
     // Switch to calendar view
     await page.getByTitle('Calendar view').click();
 
-    // Verify calendar header is visible
-    await expect(page.getByRole('button', { name: 'Today' })).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('button', { name: 'Month' })).toBeVisible();
+    // Click Today to ensure we're viewing current date
+    await page.getByRole('button', { name: 'Today' }).click();
 
-    // Switch back to list view - todo should still be there
-    await page.getByTitle('List view').click();
+    // The todo should be visible on the calendar as a chip
     await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
   });
 
