@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import { Todo } from '@/types';
 import { DayCell } from './DayCell';
 import { QuickAddPopover } from './QuickAddPopover';
-import { TodoDetailPopover } from './TodoDetailPopover';
 import {
   getMonthDates,
   groupTodosByDate,
@@ -103,8 +102,13 @@ export function MonthView({
                     date={date}
                     currentMonth={currentDate}
                     todos={dateTodos}
+                    selectedTodoId={selectedTodo?.id}
                     onDateClick={handleDateClick}
                     onTodoClick={handleTodoClick}
+                    onTodoOpenChange={handleTodoDetailOpenChange}
+                    onTodoToggle={onTodoToggle}
+                    onTodoReschedule={onTodoReschedule}
+                    onTodoEditClick={onTodoEditClick}
                   />
                 </div>
               }
@@ -112,19 +116,6 @@ export function MonthView({
           );
         })}
       </div>
-
-      {/* TodoDetailPopover for selected todo */}
-      {selectedTodo && (
-        <TodoDetailPopover
-          todo={selectedTodo}
-          onToggle={onTodoToggle}
-          onReschedule={onTodoReschedule}
-          onEditClick={onTodoEditClick}
-          open={selectedTodo !== null}
-          onOpenChange={handleTodoDetailOpenChange}
-          trigger={<span />}
-        />
-      )}
     </div>
   );
 }
