@@ -46,7 +46,8 @@ export function groupTodosByDate(todos: Todo[]): Map<string, Todo[]> {
 
   for (const todo of todos) {
     if (todo.dueDate) {
-      const dateKey = todo.dueDate; // Already in YYYY-MM-DD format
+      // Parse the ISO date string and format it as YYYY-MM-DD
+      const dateKey = formatDateKey(new Date(todo.dueDate));
       const existing = grouped.get(dateKey) || [];
       existing.push(todo);
       grouped.set(dateKey, existing);
