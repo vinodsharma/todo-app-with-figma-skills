@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { Todo } from '@/types';
 import { DayCell } from './DayCell';
 import { QuickAddPopover } from './QuickAddPopover';
-import { TodoDetailPopover } from './TodoDetailPopover';
 import {
   getWeekDates,
   groupTodosByDate,
@@ -107,8 +106,13 @@ export function WeekView({
                     date={date}
                     currentMonth={currentDate}
                     todos={dateTodos}
+                    selectedTodoId={selectedTodo?.id}
                     onDateClick={handleDateClick}
                     onTodoClick={handleTodoClick}
+                    onTodoOpenChange={handleTodoDetailOpenChange}
+                    onTodoToggle={onTodoToggle}
+                    onTodoReschedule={onTodoReschedule}
+                    onTodoEditClick={onTodoEditClick}
                     isWeekView
                   />
                 </div>
@@ -117,19 +121,6 @@ export function WeekView({
           );
         })}
       </div>
-
-      {/* TodoDetailPopover for selected todo */}
-      {selectedTodo && (
-        <TodoDetailPopover
-          todo={selectedTodo}
-          onToggle={onTodoToggle}
-          onReschedule={onTodoReschedule}
-          onEditClick={onTodoEditClick}
-          open={selectedTodo !== null}
-          onOpenChange={handleTodoDetailOpenChange}
-          trigger={<span />}
-        />
-      )}
     </div>
   );
 }

@@ -4,12 +4,18 @@ import { isToday, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Todo } from '@/types';
 import { TodoChip } from './TodoChip';
+import { TodoDetailPopover } from './TodoDetailPopover';
 
 interface DayCellProps {
   date: Date;
   currentMonth: Date;
   todos: Todo[];
+  selectedTodoId?: string | null;
   onTodoClick?: (todo: Todo) => void;
+  onTodoOpenChange?: (open: boolean) => void;
+  onTodoToggle?: (id: string) => Promise<void>;
+  onTodoReschedule?: (id: string, newDate: string) => Promise<void>;
+  onTodoEditClick?: (todo: Todo) => void;
   onDateClick?: (date: Date) => void;
   maxVisible?: number;
   isWeekView?: boolean;
@@ -19,7 +25,12 @@ export function DayCell({
   date,
   currentMonth,
   todos,
+  selectedTodoId,
   onTodoClick,
+  onTodoOpenChange,
+  onTodoToggle,
+  onTodoReschedule,
+  onTodoEditClick,
   onDateClick,
   maxVisible = 3,
   isWeekView = false,
@@ -68,13 +79,40 @@ export function DayCell({
           isWeekView && 'overflow-y-auto max-h-[calc(200px-32px)]'
         )}
       >
-        {visibleTodos.map((todo) => (
-          <TodoChip
-            key={todo.id}
-            todo={todo}
-            onClick={() => handleTodoClick(todo)}
-          />
-        ))}
+        {visibleTodos.map((todo) => {
+          const isSelected = selectedTodoId === todo.id;
+
+          // Wrap selected todo with popover for anchored positioning
+          if (isSelected && onTodoToggle && onTodoReschedule && onTodoEditClick) {
+            return (
+              <TodoDetailPopover
+                key={todo.id}
+                todo={todo}
+                onToggle={onTodoToggle}
+                onReschedule={onTodoReschedule}
+                onEditClick={onTodoEditClick}
+                open={true}
+                onOpenChange={onTodoOpenChange}
+                trigger={
+                  <div>
+                    <TodoChip
+                      todo={todo}
+                      onClick={() => handleTodoClick(todo)}
+                    />
+                  </div>
+                }
+              />
+            );
+          }
+
+          return (
+            <TodoChip
+              key={todo.id}
+              todo={todo}
+              onClick={() => handleTodoClick(todo)}
+            />
+          );
+        })}
 
         {/* +N more link */}
         {hiddenCount > 0 && (
