@@ -9,11 +9,13 @@ import { SearchFilterBar, SearchBarFilters, defaultFilters } from '@/components/
 import { EditTodoDialog } from '@/components/edit-todo-dialog';
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
 import { DndProvider } from '@/components/dnd';
+import { CalendarView } from '@/components/calendar';
 import { useTodos } from '@/hooks/use-todos';
 import { useCategories } from '@/hooks/use-categories';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useSortPreference } from '@/hooks/use-sort-preference';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { useViewPreference } from '@/hooks/use-view-preference';
 import { Priority, Todo, TodoQueryParams } from '@/types';
 
 export default function Home() {
@@ -21,6 +23,7 @@ export default function Home() {
   const [filters, setFilters] = useState<SearchBarFilters>(defaultFilters);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const { sortOption, setSortOption, isLoaded: sortLoaded } = useSortPreference();
+  const { viewMode, setViewMode, calendarView, setCalendarView } = useViewPreference();
 
   // Debounce search to avoid too many API calls
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -109,6 +112,11 @@ export default function Home() {
     await stopRecurrence(id);
   };
 
+  const handleQuickAdd = async (title: string, dueDate: string) => {
+    await createTodo({ title, dueDate });
+    await refetchCategories();
+  };
+
   const handleAddSubtask = async (parentId: string, title: string) => {
     try {
       const response = await fetch('/api/todos', {
@@ -184,21 +192,35 @@ export default function Home() {
               onFiltersChange={setFilters}
               sortOption={sortOption}
               onSortChange={setSortOption}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
             />
-            <TodoList
-              todos={todos}
-              categories={categories}
-              isLoading={isLoading}
-              hasActiveFilters={hasActiveFilters}
-              selectedIndex={selectedIndex}
-              onToggle={handleToggleTodo}
-              onEdit={handleEditTodo}
-              onEditClick={handleEditClick}
-              onDelete={handleDeleteTodo}
-              onAddSubtask={handleAddSubtask}
-              onSkipRecurrence={handleSkipRecurrence}
-              onStopRecurrence={handleStopRecurrence}
-            />
+            {viewMode === 'list' ? (
+              <TodoList
+                todos={todos}
+                categories={categories}
+                isLoading={isLoading}
+                hasActiveFilters={hasActiveFilters}
+                selectedIndex={selectedIndex}
+                onToggle={handleToggleTodo}
+                onEdit={handleEditTodo}
+                onEditClick={handleEditClick}
+                onDelete={handleDeleteTodo}
+                onAddSubtask={handleAddSubtask}
+                onSkipRecurrence={handleSkipRecurrence}
+                onStopRecurrence={handleStopRecurrence}
+              />
+            ) : (
+              <CalendarView
+                todos={todos}
+                calendarView={calendarView}
+                onCalendarViewChange={setCalendarView}
+                onTodoToggle={handleToggleTodo}
+                onTodoEdit={handleEditTodo}
+                onTodoEditClick={handleEditClick}
+                onQuickAdd={handleQuickAdd}
+              />
+            )}
           </main>
         </div>
 
