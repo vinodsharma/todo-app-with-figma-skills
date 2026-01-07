@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, X, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, X, Filter, ArrowUpDown, List, CalendarDays } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Priority, StatusFilter, DueDateFilter, SortOption, DEFAULT_SORT } from '@/types';
 import { cn } from '@/lib/utils';
+import { ViewMode } from '@/hooks/use-view-preference';
 
 // Local filter state for the search bar (without categoryId - that's managed by sidebar)
 export interface SearchBarFilters {
@@ -26,6 +27,8 @@ interface SearchFilterBarProps {
   onFiltersChange: (filters: SearchBarFilters) => void;
   sortOption?: SortOption;
   onSortChange?: (sort: SortOption) => void;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
   className?: string;
 }
 
@@ -53,6 +56,8 @@ export function SearchFilterBar({
   onFiltersChange,
   sortOption = DEFAULT_SORT,
   onSortChange,
+  viewMode,
+  onViewModeChange,
   className,
 }: SearchFilterBarProps) {
   const hasActiveFilters =
@@ -199,6 +204,39 @@ export function SearchFilterBar({
               <SelectItem value="upcoming">Upcoming</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* View Toggle */}
+          {onViewModeChange && (
+            <>
+              <div className="hidden sm:block h-6 w-px bg-border" />
+              <div className="flex items-center rounded-md border border-border">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onViewModeChange('list')}
+                  className={cn(
+                    'h-9 w-9 rounded-r-none',
+                    viewMode === 'list' && 'bg-accent'
+                  )}
+                  title="List view"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onViewModeChange('calendar')}
+                  className={cn(
+                    'h-9 w-9 rounded-l-none border-l',
+                    viewMode === 'calendar' && 'bg-accent'
+                  )}
+                  title="Calendar view"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
 
           {/* Separator */}
           <div className="hidden sm:block h-6 w-px bg-border" />
