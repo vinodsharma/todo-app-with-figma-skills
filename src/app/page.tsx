@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Header } from '@/components/header';
 import { CategorySidebar } from '@/components/category-sidebar';
+import { ActivitySidebar } from '@/components/activity';
 import { TodoForm } from '@/components/todo-form';
 import { TodoList } from '@/components/todo-list';
 import { SearchFilterBar, SearchBarFilters, defaultFilters } from '@/components/search-filter-bar';
@@ -22,6 +23,7 @@ export default function Home() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [filters, setFilters] = useState<SearchBarFilters>(defaultFilters);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
   const { sortOption, setSortOption, isLoaded: sortLoaded } = useSortPreference();
   const { viewMode, setViewMode, calendarView, setCalendarView } = useViewPreference();
 
@@ -172,8 +174,11 @@ export default function Home() {
       onCategoryReorder={handleReorderCategory}
     >
       <div className="min-h-screen flex flex-col">
-        <Header />
-        <div className="flex flex-1">
+        <Header
+          onActivityToggle={() => setIsActivityOpen(!isActivityOpen)}
+          isActivityOpen={isActivityOpen}
+        />
+        <div className="flex flex-1 overflow-hidden">
           <CategorySidebar
             categories={categories}
             selectedCategoryId={selectedCategoryId}
@@ -181,7 +186,7 @@ export default function Home() {
             onAddCategory={handleAddCategory}
             onDeleteCategory={deleteCategory}
           />
-          <main className="flex-1 p-6 space-y-4">
+          <main className="flex-1 p-6 space-y-4 overflow-auto">
             <TodoForm
               categories={categories}
               selectedCategoryId={selectedCategoryId || undefined}
@@ -222,6 +227,10 @@ export default function Home() {
               />
             )}
           </main>
+          <ActivitySidebar
+            isOpen={isActivityOpen}
+            onClose={() => setIsActivityOpen(false)}
+          />
         </div>
 
         {/* Edit Dialog (triggered by keyboard shortcut 'e') */}
