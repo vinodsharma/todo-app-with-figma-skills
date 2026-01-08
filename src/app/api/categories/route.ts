@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { logActivity } from '@/lib/activity-logger';
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -92,6 +93,20 @@ export async function POST(request: Request) {
           },
         },
       },
+    });
+
+    // Log activity
+    await logActivity({
+      entityType: 'CATEGORY',
+      entityId: category.id,
+      entityTitle: category.name,
+      action: 'CREATE',
+      afterState: {
+        id: category.id,
+        name: category.name,
+        color: category.color,
+      },
+      userId: session.user.id,
     });
 
     return NextResponse.json(category, { status: 201 });

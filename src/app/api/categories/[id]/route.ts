@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { logActivity } from '@/lib/activity-logger';
 
 export async function DELETE(
   request: Request,
@@ -29,6 +30,20 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    // Log activity
+    await logActivity({
+      entityType: 'CATEGORY',
+      entityId: existingCategory.id,
+      entityTitle: existingCategory.name,
+      action: 'DELETE',
+      beforeState: {
+        id: existingCategory.id,
+        name: existingCategory.name,
+        color: existingCategory.color,
+      },
+      userId: session.user.id,
+    });
 
     // Delete the category (todos will have categoryId set to null due to onDelete: SetNull)
     await prisma.category.delete({
