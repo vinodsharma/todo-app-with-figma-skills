@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { History, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,14 @@ interface ActivitySidebarProps {
 }
 
 export function ActivitySidebar({ isOpen, onClose }: ActivitySidebarProps) {
-  const { activities, isLoading, error } = useActivity({ limit: 10 });
+  const { activities, isLoading, error, refresh } = useActivity({ limit: 10 });
+
+  // Refresh activities when sidebar opens
+  useEffect(() => {
+    if (isOpen) {
+      refresh();
+    }
+  }, [isOpen, refresh]);
 
   if (!isOpen) return null;
 
