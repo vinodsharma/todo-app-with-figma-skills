@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { logActivity } from '@/lib/activity-logger';
 
 const VALID_THEMES = ['light', 'dark', 'system'] as const;
 type Theme = (typeof VALID_THEMES)[number];
@@ -23,10 +24,28 @@ export async function PATCH(request: Request) {
       );
     }
 
+    // Capture previous theme for activity log
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { theme: true },
+    });
+    const previousTheme = currentUser?.theme ?? 'system';
+
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: { theme: theme as Theme },
       select: { id: true, theme: true },
+    });
+
+    // Log activity
+    await logActivity({
+      entityType: 'USER_SETTINGS',
+      entityId: session.user.id,
+      entityTitle: 'Theme',
+      action: 'UPDATE',
+      beforeState: { theme: previousTheme },
+      afterState: { theme: theme },
+      userId: session.user.id,
     });
 
     return NextResponse.json(updatedUser);
