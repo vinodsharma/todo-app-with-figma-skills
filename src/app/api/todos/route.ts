@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Priority } from '@prisma/client';
+import { logActivity } from '@/lib/activity-logger';
 
 // Priority values for sorting (HIGH > MEDIUM > LOW)
 const PRIORITY_ORDER: Record<Priority, number> = {
@@ -285,6 +286,24 @@ export async function POST(request: Request) {
       include: {
         category: true,
       },
+    });
+
+    // Log activity
+    await logActivity({
+      entityType: 'TODO',
+      entityId: todo.id,
+      entityTitle: todo.title,
+      action: 'CREATE',
+      afterState: {
+        id: todo.id,
+        title: todo.title,
+        description: todo.description,
+        completed: todo.completed,
+        priority: todo.priority,
+        dueDate: todo.dueDate?.toISOString() || null,
+        categoryId: todo.categoryId,
+      },
+      userId: session.user.id,
     });
 
     return NextResponse.json(todo, { status: 201 });
