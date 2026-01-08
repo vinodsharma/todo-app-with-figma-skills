@@ -12,8 +12,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { History } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-export function Header() {
+interface HeaderProps {
+  onActivityToggle?: () => void;
+  isActivityOpen?: boolean;
+}
+
+export function Header({ onActivityToggle, isActivityOpen }: HeaderProps) {
   const { data: session } = useSession()
 
   const getInitials = (name?: string | null, email?: string | null) => {
@@ -40,6 +47,15 @@ export function Header() {
         <h1 className="text-xl font-semibold">Todo App</h1>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onActivityToggle}
+            className={cn(isActivityOpen && 'bg-accent')}
+            title="Activity history"
+          >
+            <History className="h-5 w-5" />
+          </Button>
           <ThemeToggle />
           {session?.user && (
           <DropdownMenu>
