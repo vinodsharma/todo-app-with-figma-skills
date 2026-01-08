@@ -31,6 +31,7 @@ model User {
   sessions      Session[]
   todos         Todo[]
   categories    Category[]
+  activityLogs  ActivityLog[]
   createdAt     DateTime  @default(now())
 }
 
@@ -113,4 +114,23 @@ model Todo {
   @@index([categoryId])
   @@index([parentId])
   @@index([userId, categoryId, sortOrder])  // For efficient sorted queries
+}
+
+model ActivityLog {
+  id           String   @id @default(cuid())
+  entityType   String   // "TODO", "CATEGORY", "USER_SETTINGS"
+  entityId     String?  // ID of affected entity (null if deleted)
+  entityTitle  String   // Human-readable name at time of action
+  action       String   // "CREATE", "UPDATE", "DELETE", "COMPLETE", "UNCOMPLETE"
+
+  // Full snapshots stored as JSON
+  beforeState  Json?    // State before change (null for CREATE)
+  afterState   Json?    // State after change (null for DELETE)
+
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
 }
