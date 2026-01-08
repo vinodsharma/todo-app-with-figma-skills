@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { Prisma } from '@prisma/client';
 
 export type EntityType = 'TODO' | 'CATEGORY' | 'USER_SETTINGS';
 export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'COMPLETE' | 'UNCOMPLETE';
@@ -25,8 +26,8 @@ export async function logActivity(params: LogActivityParams): Promise<void> {
         entityId: params.entityId,
         entityTitle: params.entityTitle,
         action: params.action,
-        beforeState: params.beforeState,
-        afterState: params.afterState,
+        beforeState: params.beforeState as Prisma.InputJsonValue | undefined,
+        afterState: params.afterState as Prisma.InputJsonValue | undefined,
         userId: params.userId,
       },
     });
