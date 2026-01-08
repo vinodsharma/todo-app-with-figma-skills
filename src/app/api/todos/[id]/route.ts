@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Priority } from '@prisma/client';
 import { getNextOccurrence } from '@/lib/recurrence';
+import { logActivity } from '@/lib/activity-logger';
 
 export async function PATCH(
   request: Request,
@@ -31,6 +32,17 @@ export async function PATCH(
         { status: 404 }
       );
     }
+
+    // Capture before state for activity log
+    const beforeState = {
+      id: existingTodo.id,
+      title: existingTodo.title,
+      description: existingTodo.description,
+      completed: existingTodo.completed,
+      priority: existingTodo.priority,
+      dueDate: existingTodo.dueDate?.toISOString() || null,
+      categoryId: existingTodo.categoryId,
+    };
 
     const body = await request.json();
     const { title, description, completed, priority, dueDate, categoryId } = body;
@@ -140,6 +152,31 @@ export async function PATCH(
       },
     });
 
+    // Determine action type
+    let action: 'UPDATE' | 'COMPLETE' | 'UNCOMPLETE' = 'UPDATE';
+    if (completed !== undefined) {
+      action = completed ? 'COMPLETE' : 'UNCOMPLETE';
+    }
+
+    // Log activity
+    await logActivity({
+      entityType: 'TODO',
+      entityId: updatedTodo.id,
+      entityTitle: updatedTodo.title,
+      action,
+      beforeState,
+      afterState: {
+        id: updatedTodo.id,
+        title: updatedTodo.title,
+        description: updatedTodo.description,
+        completed: updatedTodo.completed,
+        priority: updatedTodo.priority,
+        dueDate: updatedTodo.dueDate?.toISOString() || null,
+        categoryId: updatedTodo.categoryId,
+      },
+      userId: session.user.id,
+    });
+
     return NextResponse.json(updatedTodo);
   } catch (error) {
     console.error('Error updating todo:', error);
@@ -176,6 +213,24 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    // Log activity before deletion
+    await logActivity({
+      entityType: 'TODO',
+      entityId: existingTodo.id,
+      entityTitle: existingTodo.title,
+      action: 'DELETE',
+      beforeState: {
+        id: existingTodo.id,
+        title: existingTodo.title,
+        description: existingTodo.description,
+        completed: existingTodo.completed,
+        priority: existingTodo.priority,
+        dueDate: existingTodo.dueDate?.toISOString() || null,
+        categoryId: existingTodo.categoryId,
+      },
+      userId: session.user.id,
+    });
 
     // Delete the todo
     await prisma.todo.delete({
