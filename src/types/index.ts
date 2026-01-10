@@ -39,6 +39,8 @@ export interface Todo {
   // Recurrence fields
   recurrenceRule: string | null;
   recurrenceEnd: string | null;
+  // Archive field
+  archivedAt: string | null;
 }
 
 // Input types for creating todos
@@ -63,6 +65,7 @@ export interface UpdateTodoInput {
   categoryId?: string;
   recurrenceRule?: string | null;
   recurrenceEnd?: string | null;
+  archivedAt?: string | null;
 }
 
 // Input types for creating categories
