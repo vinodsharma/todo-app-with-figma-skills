@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Trash2, FolderOpen, Flag, X } from 'lucide-react';
+import { Check, Trash2, FolderOpen, Flag, X, Archive, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,6 +20,9 @@ interface BulkActionBarProps {
   onClose: () => void;
   categories: Category[];
   className?: string;
+  isArchiveView?: boolean;
+  onArchive?: () => void;
+  onRestore?: () => void;
 }
 
 export function BulkActionBar({
@@ -31,6 +34,9 @@ export function BulkActionBar({
   onClose,
   categories,
   className,
+  isArchiveView = false,
+  onArchive,
+  onRestore,
 }: BulkActionBarProps) {
   if (selectedCount === 0) {
     return null;
@@ -54,15 +60,41 @@ export function BulkActionBar({
         </span>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onComplete}
-            className="gap-2"
-          >
-            <Check className="h-4 w-4" />
-            Complete
-          </Button>
+          {!isArchiveView && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onComplete}
+              className="gap-2"
+            >
+              <Check className="h-4 w-4" />
+              Complete
+            </Button>
+          )}
+
+          {!isArchiveView && onArchive && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onArchive}
+              className="gap-2"
+            >
+              <Archive className="h-4 w-4" />
+              Archive
+            </Button>
+          )}
+
+          {isArchiveView && onRestore && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRestore}
+              className="gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Restore
+            </Button>
+          )}
 
           <Button
             variant="outline"
