@@ -52,7 +52,7 @@ export async function POST(request: Request) {
             dueDate: todo.dueDate,
             categoryId: todo.categoryId,
           },
-          afterState: null,
+          afterState: undefined,
           userId: session.user.id,
         });
       }
