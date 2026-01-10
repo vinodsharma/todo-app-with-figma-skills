@@ -2,7 +2,7 @@ import { prisma } from './prisma';
 import { Prisma } from '@prisma/client';
 
 export type EntityType = 'TODO' | 'CATEGORY' | 'USER_SETTINGS';
-export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'COMPLETE' | 'UNCOMPLETE';
+export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'COMPLETE' | 'UNCOMPLETE' | 'ARCHIVE' | 'RESTORE';
 
 export interface LogActivityParams {
   entityType: EntityType;
