@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Todo, Category, UpdateTodoInput } from "@/types";
 import { EditTodoDialog } from "@/components/edit-todo-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, Circle, ListTodo, Search } from "lucide-react";
+import { Archive, CheckCircle2, Circle, ListTodo, Search } from "lucide-react";
 import { SortableTodoList } from '@/components/dnd';
 
 interface TodoListProps {
@@ -12,6 +12,7 @@ interface TodoListProps {
   categories: Category[];
   isLoading: boolean;
   hasActiveFilters?: boolean;
+  isArchived?: boolean;
   selectedIndex?: number | null;
   isSelectionMode?: boolean;
   selectedIds?: Set<string>;
@@ -20,6 +21,8 @@ interface TodoListProps {
   onEdit: (id: string, input: UpdateTodoInput) => Promise<void>;
   onEditClick?: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
+  onArchive?: (id: string) => Promise<void>;
+  onRestore?: (id: string) => Promise<void>;
   onAddSubtask?: (parentId: string, title: string) => Promise<void>;
   onSkipRecurrence?: (id: string) => Promise<void>;
   onStopRecurrence?: (id: string) => Promise<void>;
@@ -76,11 +79,26 @@ function NoResultsState() {
   );
 }
 
+function ArchivedEmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="mb-4 rounded-full bg-muted p-4">
+        <Archive className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="mb-1 text-lg font-medium">No archived todos</h3>
+      <p className="text-sm text-muted-foreground">
+        Archived todos will appear here
+      </p>
+    </div>
+  );
+}
+
 export function TodoList({
   todos,
   categories,
   isLoading,
   hasActiveFilters = false,
+  isArchived = false,
   selectedIndex,
   isSelectionMode = false,
   selectedIds = new Set<string>(),
@@ -89,6 +107,8 @@ export function TodoList({
   onEdit,
   onEditClick,
   onDelete,
+  onArchive,
+  onRestore,
   onAddSubtask,
   onSkipRecurrence,
   onStopRecurrence,
@@ -134,6 +154,9 @@ export function TodoList({
   }
 
   if (todos.length === 0) {
+    if (isArchived) {
+      return <ArchivedEmptyState />;
+    }
     return hasActiveFilters ? <NoResultsState /> : <EmptyState />;
   }
 
@@ -151,12 +174,15 @@ export function TodoList({
           </div>
           <SortableTodoList
             todos={activeTodos}
+            isArchived={isArchived}
             onToggle={onToggle}
             onEdit={handleEditClick}
             onDelete={onDelete}
-            onAddSubtask={onAddSubtask}
-            onSkipRecurrence={onSkipRecurrence}
-            onStopRecurrence={onStopRecurrence}
+            onArchive={onArchive}
+            onRestore={onRestore}
+            onAddSubtask={!isArchived ? onAddSubtask : undefined}
+            onSkipRecurrence={!isArchived ? onSkipRecurrence : undefined}
+            onStopRecurrence={!isArchived ? onStopRecurrence : undefined}
             selectedIndex={selectedIndex}
             todoIndexMap={todoIndexMap}
             isSelectionMode={isSelectionMode}
@@ -176,12 +202,15 @@ export function TodoList({
           </div>
           <SortableTodoList
             todos={completedTodos}
+            isArchived={isArchived}
             onToggle={onToggle}
             onEdit={handleEditClick}
             onDelete={onDelete}
-            onAddSubtask={onAddSubtask}
-            onSkipRecurrence={onSkipRecurrence}
-            onStopRecurrence={onStopRecurrence}
+            onArchive={onArchive}
+            onRestore={onRestore}
+            onAddSubtask={!isArchived ? onAddSubtask : undefined}
+            onSkipRecurrence={!isArchived ? onSkipRecurrence : undefined}
+            onStopRecurrence={!isArchived ? onStopRecurrence : undefined}
             selectedIndex={selectedIndex}
             todoIndexMap={todoIndexMap}
             isSelectionMode={isSelectionMode}

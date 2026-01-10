@@ -10,9 +10,12 @@ import { cn } from '@/lib/utils';
 
 interface SortableTodoItemProps {
   todo: Todo;
+  isArchived?: boolean;
   onToggle: (id: string) => Promise<void>;
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
+  onArchive?: (id: string) => Promise<void>;
+  onRestore?: (id: string) => Promise<void>;
   onAddSubtask?: (parentId: string, title: string) => Promise<void>;
   onSkipRecurrence?: (id: string) => Promise<void>;
   onStopRecurrence?: (id: string) => Promise<void>;
@@ -24,9 +27,12 @@ interface SortableTodoItemProps {
 
 export function SortableTodoItem({
   todo,
+  isArchived = false,
   onToggle,
   onEdit,
   onDelete,
+  onArchive,
+  onRestore,
   onAddSubtask,
   onSkipRecurrence,
   onStopRecurrence,
@@ -83,9 +89,12 @@ export function SortableTodoItem({
       <div className="flex-1">
         <TodoItem
           todo={todo}
+          isArchived={isArchived}
           onToggle={onToggle}
           onEdit={onEdit}
           onDelete={onDelete}
+          onArchive={onArchive}
+          onRestore={onRestore}
           onAddSubtask={onAddSubtask}
           onSkipRecurrence={onSkipRecurrence}
           onStopRecurrence={onStopRecurrence}
