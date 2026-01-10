@@ -107,6 +107,7 @@ export interface TodoQueryParams {
   categoryId?: string;
   sortBy?: SortField;
   sortDirection?: SortDirection;
+  archived?: boolean;
 }
 
 // Input types for reordering
