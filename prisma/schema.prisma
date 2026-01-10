@@ -99,6 +99,7 @@ model Todo {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime? // null = active, timestamp = archived
   sortOrder   Int       @default(0)  // Lower = higher in list (top)
 
   // Recurrence fields
