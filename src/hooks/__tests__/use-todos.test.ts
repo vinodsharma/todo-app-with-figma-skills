@@ -238,4 +238,131 @@ describe('useTodos', () => {
       })
     ).rejects.toThrow();
   });
+
+  it('should bulk complete todos', async () => {
+    server.use(
+      http.post('/api/todos/bulk-complete', async ({ request }) => {
+        const body = await request.json() as { ids: string[]; completed: boolean };
+        return HttpResponse.json({ updated: body.ids.length });
+      })
+    );
+
+    const { result } = renderHook(() => useTodos());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    let response: { updated: number } | undefined;
+    await act(async () => {
+      response = await result.current.bulkComplete(['todo-1', 'todo-2'], true);
+    });
+
+    expect(response).toEqual({ updated: 2 });
+  });
+
+  it('should bulk delete todos', async () => {
+    server.use(
+      http.post('/api/todos/bulk-delete', async ({ request }) => {
+        const body = await request.json() as { ids: string[] };
+        return HttpResponse.json({ deleted: body.ids.length, deletedTodos: mockTodos.slice(0, 2) });
+      })
+    );
+
+    const { result } = renderHook(() => useTodos());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    let response: { deleted: number; deletedTodos: unknown[] } | undefined;
+    await act(async () => {
+      response = await result.current.bulkDelete(['todo-1', 'todo-2']);
+    });
+
+    expect(response?.deleted).toBe(2);
+    expect(response?.deletedTodos).toHaveLength(2);
+  });
+
+  it('should bulk update todos', async () => {
+    server.use(
+      http.post('/api/todos/bulk-update', async ({ request }) => {
+        const body = await request.json() as { ids: string[] };
+        return HttpResponse.json({ updated: body.ids.length });
+      })
+    );
+
+    const { result } = renderHook(() => useTodos());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    let response: { updated: number } | undefined;
+    await act(async () => {
+      response = await result.current.bulkUpdate(['todo-1', 'todo-2'], { priority: Priority.HIGH });
+    });
+
+    expect(response).toEqual({ updated: 2 });
+  });
+
+  it('should handle bulk complete error', async () => {
+    server.use(
+      http.post('/api/todos/bulk-complete', () => {
+        return HttpResponse.json({ error: 'Failed to bulk complete' }, { status: 400 });
+      })
+    );
+
+    const { result } = renderHook(() => useTodos());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    await expect(
+      act(async () => {
+        await result.current.bulkComplete(['todo-1'], true);
+      })
+    ).rejects.toThrow();
+  });
+
+  it('should handle bulk delete error', async () => {
+    server.use(
+      http.post('/api/todos/bulk-delete', () => {
+        return HttpResponse.json({ error: 'Failed to bulk delete' }, { status: 400 });
+      })
+    );
+
+    const { result } = renderHook(() => useTodos());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    await expect(
+      act(async () => {
+        await result.current.bulkDelete(['todo-1']);
+      })
+    ).rejects.toThrow();
+  });
+
+  it('should handle bulk update error', async () => {
+    server.use(
+      http.post('/api/todos/bulk-update', () => {
+        return HttpResponse.json({ error: 'Failed to bulk update' }, { status: 400 });
+      })
+    );
+
+    const { result } = renderHook(() => useTodos());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    await expect(
+      act(async () => {
+        await result.current.bulkUpdate(['todo-1'], { categoryId: 'cat-1' });
+      })
+    ).rejects.toThrow();
+  });
 });
