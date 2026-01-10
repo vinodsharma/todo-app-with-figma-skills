@@ -42,10 +42,11 @@ export async function PATCH(
       priority: existingTodo.priority,
       dueDate: existingTodo.dueDate?.toISOString() || null,
       categoryId: existingTodo.categoryId,
+      archivedAt: existingTodo.archivedAt?.toISOString() || null,
     };
 
     const body = await request.json();
-    const { title, description, completed, priority, dueDate, categoryId } = body;
+    const { title, description, completed, priority, dueDate, categoryId, recurrenceRule, recurrenceEnd, archivedAt } = body;
 
     // Build update data object
     const updateData: any = {};
@@ -133,12 +134,26 @@ export async function PATCH(
       }
     }
 
-    if (body.recurrenceRule !== undefined) {
-      updateData.recurrenceRule = body.recurrenceRule;
+    if (recurrenceRule !== undefined) {
+      updateData.recurrenceRule = recurrenceRule;
     }
 
-    if (body.recurrenceEnd !== undefined) {
-      updateData.recurrenceEnd = body.recurrenceEnd ? new Date(body.recurrenceEnd) : null;
+    if (recurrenceEnd !== undefined) {
+      updateData.recurrenceEnd = recurrenceEnd ? new Date(recurrenceEnd) : null;
+    }
+
+    // Handle archive/restore - also affects subtasks
+    if (archivedAt !== undefined) {
+      // Archive or restore all subtasks along with parent
+      await prisma.todo.updateMany({
+        where: {
+          parentId: todoId,
+          userId: session.user.id,
+        },
+        data: { archivedAt: archivedAt ? new Date(archivedAt) : null },
+      });
+
+      updateData.archivedAt = archivedAt ? new Date(archivedAt) : null;
     }
 
     // Update the todo
@@ -173,9 +188,24 @@ export async function PATCH(
         priority: updatedTodo.priority,
         dueDate: updatedTodo.dueDate?.toISOString() || null,
         categoryId: updatedTodo.categoryId,
+        archivedAt: updatedTodo.archivedAt?.toISOString() || null,
       },
       userId: session.user.id,
     });
+
+    // Log archive/restore activity
+    if (archivedAt !== undefined) {
+      const archiveAction = archivedAt ? 'ARCHIVE' : 'RESTORE';
+      await logActivity({
+        entityType: 'TODO',
+        entityId: updatedTodo.id,
+        entityTitle: updatedTodo.title,
+        action: archiveAction,
+        beforeState: { archivedAt: existingTodo.archivedAt?.toISOString() || null },
+        afterState: { archivedAt: updatedTodo.archivedAt?.toISOString() || null },
+        userId: session.user.id,
+      });
+    }
 
     return NextResponse.json(updatedTodo);
   } catch (error) {
