@@ -13,6 +13,9 @@ interface TodoListProps {
   isLoading: boolean;
   hasActiveFilters?: boolean;
   selectedIndex?: number | null;
+  isSelectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (id: string, e: React.MouseEvent) => void;
   onToggle: (id: string) => Promise<void>;
   onEdit: (id: string, input: UpdateTodoInput) => Promise<void>;
   onEditClick?: (todo: Todo) => void;
@@ -79,6 +82,9 @@ export function TodoList({
   isLoading,
   hasActiveFilters = false,
   selectedIndex,
+  isSelectionMode = false,
+  selectedIds = new Set<string>(),
+  onSelectionChange,
   onToggle,
   onEdit,
   onEditClick,
@@ -153,6 +159,9 @@ export function TodoList({
             onStopRecurrence={onStopRecurrence}
             selectedIndex={selectedIndex}
             todoIndexMap={todoIndexMap}
+            isSelectionMode={isSelectionMode}
+            selectedIds={selectedIds}
+            onSelectionChange={onSelectionChange}
           />
         </div>
       )}
@@ -175,6 +184,9 @@ export function TodoList({
             onStopRecurrence={onStopRecurrence}
             selectedIndex={selectedIndex}
             todoIndexMap={todoIndexMap}
+            isSelectionMode={isSelectionMode}
+            selectedIds={selectedIds}
+            onSelectionChange={onSelectionChange}
           />
         </div>
       )}
