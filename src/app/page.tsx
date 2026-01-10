@@ -27,6 +27,8 @@ export default function Home() {
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isArchiveView, setIsArchiveView] = useState(false);
+  const [archivedCount, setArchivedCount] = useState(0);
   const { sortOption, setSortOption, isLoaded: sortLoaded } = useSortPreference();
   const { viewMode, setViewMode, calendarView, setCalendarView } = useViewPreference();
   const selection = useSelection();
@@ -37,6 +39,12 @@ export default function Home() {
   // Build query params for API
   const queryParams = useMemo((): TodoQueryParams => {
     const params: TodoQueryParams = {};
+
+    // If archive view, only fetch archived todos
+    if (isArchiveView) {
+      params.archived = true;
+      return params; // Skip other filters for archive view
+    }
 
     if (debouncedSearch) {
       params.search = debouncedSearch;
@@ -59,14 +67,30 @@ export default function Home() {
     params.sortDirection = sortOption.direction;
 
     return params;
-  }, [debouncedSearch, selectedCategoryId, filters.priority, filters.status, filters.dueDate, sortOption]);
+  }, [debouncedSearch, selectedCategoryId, filters.priority, filters.status, filters.dueDate, sortOption, isArchiveView]);
 
   const { categories, createCategory: createCategoryHook, deleteCategory, reorderCategory, refetch: refetchCategories } = useCategories();
   // Wait for sort preference to load before fetching todos to avoid race condition
-  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, skipRecurrence, stopRecurrence, reorderTodo, bulkComplete, bulkDelete, bulkUpdate, refetch: fetchTodos } = useTodos({
+  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, skipRecurrence, stopRecurrence, reorderTodo, bulkComplete, bulkDelete, bulkUpdate, archiveTodo, restoreTodo, bulkArchive, bulkRestore, refetch: fetchTodos } = useTodos({
     filters: queryParams,
     enabled: sortLoaded,
   });
+
+  // Fetch archived count
+  useEffect(() => {
+    const fetchArchivedCount = async () => {
+      try {
+        const response = await fetch('/api/todos?archived=true');
+        if (response.ok) {
+          const data = await response.json();
+          setArchivedCount(data.length);
+        }
+      } catch (error) {
+        console.error('Failed to fetch archived count:', error);
+      }
+    };
+    fetchArchivedCount();
+  }, [todos]); // Refetch when todos change
 
   // Memoized list of all todo IDs for selection
   const allTodoIds = useMemo(() => todos.map(t => t.id), [todos]);
@@ -121,6 +145,30 @@ export default function Home() {
     await stopRecurrence(id);
   };
 
+  const handleArchiveTodo = async (id: string) => {
+    await archiveTodo(id);
+    await refetchCategories();
+  };
+
+  const handleRestoreTodo = async (id: string) => {
+    await restoreTodo(id);
+    await refetchCategories();
+  };
+
+  const handleBulkArchive = useCallback(async () => {
+    const ids = Array.from(selection.selectedIds);
+    await bulkArchive(ids);
+    selection.deselectAll();
+    await refetchCategories();
+  }, [selection, bulkArchive, refetchCategories]);
+
+  const handleBulkRestore = useCallback(async () => {
+    const ids = Array.from(selection.selectedIds);
+    await bulkRestore(ids);
+    selection.deselectAll();
+    await refetchCategories();
+  }, [selection, bulkRestore, refetchCategories]);
+
   const handleQuickAdd = async (title: string, dueDate: string) => {
     await createTodo({ title, dueDate });
     await refetchCategories();
@@ -159,8 +207,16 @@ export default function Home() {
     onDelete: handleDeleteTodo,
   });
 
+  // Handle archive selection
+  const handleSelectArchive = () => {
+    setIsArchiveView(true);
+    setSelectedCategoryId(null);
+    setFilters(defaultFilters);
+  };
+
   // Handle category selection - also clear filters when switching categories for cleaner UX
   const handleSelectCategory = (categoryId: string | null) => {
+    setIsArchiveView(false);
     setSelectedCategoryId(categoryId);
   };
 
@@ -237,16 +293,21 @@ export default function Home() {
           <CategorySidebar
             categories={categories}
             selectedCategoryId={selectedCategoryId}
+            isArchiveView={isArchiveView}
+            archivedCount={archivedCount}
             onSelectCategory={handleSelectCategory}
+            onSelectArchive={handleSelectArchive}
             onAddCategory={handleAddCategory}
             onDeleteCategory={deleteCategory}
           />
           <main className="flex-1 p-6 space-y-4 overflow-auto">
-            <TodoForm
-              categories={categories}
-              selectedCategoryId={selectedCategoryId || undefined}
-              onSubmit={handleCreateTodo}
-            />
+            {!isArchiveView && (
+              <TodoForm
+                categories={categories}
+                selectedCategoryId={selectedCategoryId || undefined}
+                onSubmit={handleCreateTodo}
+              />
+            )}
             <SearchFilterBar
               filters={filters}
               onFiltersChange={setFilters}
@@ -266,6 +327,7 @@ export default function Home() {
                 categories={categories}
                 isLoading={isLoading}
                 hasActiveFilters={hasActiveFilters}
+                isArchived={isArchiveView}
                 selectedIndex={selectedIndex}
                 isSelectionMode={selection.isSelectionMode}
                 selectedIds={selection.selectedIds}
@@ -274,6 +336,8 @@ export default function Home() {
                 onEdit={handleEditTodo}
                 onEditClick={handleEditClick}
                 onDelete={handleDeleteTodo}
+                onArchive={!isArchiveView ? handleArchiveTodo : undefined}
+                onRestore={isArchiveView ? handleRestoreTodo : undefined}
                 onAddSubtask={handleAddSubtask}
                 onSkipRecurrence={handleSkipRecurrence}
                 onStopRecurrence={handleStopRecurrence}
@@ -320,6 +384,9 @@ export default function Home() {
             onChangePriority={handleBulkChangePriority}
             onClose={selection.exitSelectionMode}
             categories={categories}
+            isArchiveView={isArchiveView}
+            onArchive={!isArchiveView ? handleBulkArchive : undefined}
+            onRestore={isArchiveView ? handleBulkRestore : undefined}
           />
         )}
 
