@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Todo } from '@/types';
 import { TodoItem } from '@/components/todo-item';
 import { DragHandle } from './DragHandle';
+import { SelectionCheckbox } from '@/components/bulk-actions';
 import { cn } from '@/lib/utils';
 
 interface SortableTodoItemProps {
@@ -16,6 +17,9 @@ interface SortableTodoItemProps {
   onSkipRecurrence?: (id: string) => Promise<void>;
   onStopRecurrence?: (id: string) => Promise<void>;
   isSelected?: boolean;
+  isSelectionMode?: boolean;
+  isItemSelected?: boolean;
+  onSelectionChange?: (e: React.MouseEvent) => void;
 }
 
 export function SortableTodoItem({
@@ -27,6 +31,9 @@ export function SortableTodoItem({
   onSkipRecurrence,
   onStopRecurrence,
   isSelected,
+  isSelectionMode,
+  isItemSelected,
+  onSelectionChange,
 }: SortableTodoItemProps) {
   const {
     attributes,
@@ -58,12 +65,21 @@ export function SortableTodoItem({
         isDragging && 'opacity-50'
       )}
     >
-      <DragHandle
-        listeners={listeners}
-        attributes={attributes}
-        isDragging={isDragging}
-        className="mt-4"
-      />
+      {isSelectionMode ? (
+        <div className="mt-4">
+          <SelectionCheckbox
+            checked={isItemSelected ?? false}
+            onChange={onSelectionChange ?? (() => {})}
+          />
+        </div>
+      ) : (
+        <DragHandle
+          listeners={listeners}
+          attributes={attributes}
+          isDragging={isDragging}
+          className="mt-4"
+        />
+      )}
       <div className="flex-1">
         <TodoItem
           todo={todo}
@@ -73,7 +89,7 @@ export function SortableTodoItem({
           onAddSubtask={onAddSubtask}
           onSkipRecurrence={onSkipRecurrence}
           onStopRecurrence={onStopRecurrence}
-          isSelected={isSelected}
+          isSelected={isSelected || isItemSelected}
         />
       </div>
     </div>
