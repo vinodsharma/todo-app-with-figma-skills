@@ -18,6 +18,9 @@ interface SortableTodoListProps {
   onStopRecurrence?: (id: string) => Promise<void>;
   selectedIndex?: number | null;
   todoIndexMap: Map<string, number>;
+  isSelectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (id: string, e: React.MouseEvent) => void;
 }
 
 export function SortableTodoList({
@@ -30,6 +33,9 @@ export function SortableTodoList({
   onStopRecurrence,
   selectedIndex,
   todoIndexMap,
+  isSelectionMode = false,
+  selectedIds = new Set(),
+  onSelectionChange,
 }: SortableTodoListProps) {
   const todoIds = useMemo(() => todos.map((todo) => todo.id), [todos]);
 
@@ -47,6 +53,9 @@ export function SortableTodoList({
             onSkipRecurrence={onSkipRecurrence}
             onStopRecurrence={onStopRecurrence}
             isSelected={selectedIndex === todoIndexMap.get(todo.id)}
+            isSelectionMode={isSelectionMode}
+            isItemSelected={selectedIds?.has(todo.id)}
+            onSelectionChange={(e) => onSelectionChange?.(todo.id, e)}
           />
         ))}
       </div>
