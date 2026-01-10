@@ -27,6 +27,14 @@ interface BulkUpdateData {
   priority?: Priority;
 }
 
+interface BulkArchiveResult {
+  archived: number;
+}
+
+interface BulkRestoreResult {
+  restored: number;
+}
+
 interface UseTodosReturn {
   todos: Todo[];
   isLoading: boolean;
@@ -40,6 +48,10 @@ interface UseTodosReturn {
   bulkComplete: (ids: string[], completed: boolean) => Promise<BulkCompleteResult>;
   bulkDelete: (ids: string[]) => Promise<BulkDeleteResult>;
   bulkUpdate: (ids: string[], data: BulkUpdateData) => Promise<BulkUpdateResult>;
+  archiveTodo: (id: string) => Promise<void>;
+  restoreTodo: (id: string) => Promise<void>;
+  bulkArchive: (ids: string[]) => Promise<BulkArchiveResult>;
+  bulkRestore: (ids: string[]) => Promise<BulkRestoreResult>;
   refetch: () => Promise<void>;
 }
 
@@ -88,6 +100,9 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
       if (filters?.sortDirection) {
         params.set('sortDirection', filters.sortDirection);
       }
+      if (filters?.archived !== undefined) {
+        params.set('archived', String(filters.archived));
+      }
 
       const queryString = params.toString();
       const url = queryString ? `/api/todos?${queryString}` : '/api/todos';
@@ -105,7 +120,7 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     } finally {
       setIsLoading(false);
     }
-  }, [filters?.search, filters?.categoryId, filters?.status, filters?.priority, filters?.dueDate, filters?.sortBy, filters?.sortDirection]);
+  }, [filters?.search, filters?.categoryId, filters?.status, filters?.priority, filters?.dueDate, filters?.sortBy, filters?.sortDirection, filters?.archived]);
 
   useEffect(() => {
     if (enabled) {
@@ -344,6 +359,74 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     }
   };
 
+  const archiveTodo = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+      });
+      if (!response.ok) throw new Error('Failed to archive todo');
+      setTodos(prev => prev.filter(t => t.id !== id));
+      toast.success('Todo archived');
+    } catch (error) {
+      toast.error('Failed to archive todo');
+      throw error;
+    }
+  }, []);
+
+  const restoreTodo = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivedAt: null }),
+      });
+      if (!response.ok) throw new Error('Failed to restore todo');
+      setTodos(prev => prev.filter(t => t.id !== id));
+      toast.success('Todo restored');
+    } catch (error) {
+      toast.error('Failed to restore todo');
+      throw error;
+    }
+  }, []);
+
+  const bulkArchive = useCallback(async (ids: string[]): Promise<BulkArchiveResult> => {
+    try {
+      const response = await fetch('/api/todos/bulk-archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) throw new Error('Failed to archive todos');
+      const result = await response.json();
+      setTodos(prev => prev.filter(t => !ids.includes(t.id)));
+      toast.success(`${result.archived} todo(s) archived`);
+      return result;
+    } catch (error) {
+      toast.error('Failed to archive todos');
+      throw error;
+    }
+  }, []);
+
+  const bulkRestore = useCallback(async (ids: string[]): Promise<BulkRestoreResult> => {
+    try {
+      const response = await fetch('/api/todos/bulk-restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) throw new Error('Failed to restore todos');
+      const result = await response.json();
+      setTodos(prev => prev.filter(t => !ids.includes(t.id)));
+      toast.success(`${result.restored} todo(s) restored`);
+      return result;
+    } catch (error) {
+      toast.error('Failed to restore todos');
+      throw error;
+    }
+  }, []);
+
   return {
     todos,
     isLoading,
@@ -357,6 +440,10 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     bulkComplete,
     bulkDelete,
     bulkUpdate,
+    archiveTodo,
+    restoreTodo,
+    bulkArchive,
+    bulkRestore,
     refetch: fetchTodos,
   };
 }
