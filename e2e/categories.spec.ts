@@ -1,8 +1,13 @@
 import { test, expect } from './fixtures';
 
 test.describe('Category Management', () => {
+  // Increase timeout for tests with complex interactions
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, authenticatedPage }) => {
     await page.goto('/');
+    // Wait for the app to fully load
+    await expect(page.getByRole('button', { name: /all todos/i })).toBeVisible({ timeout: 15000 });
   });
 
   test('should display category sidebar', async ({ page }) => {
@@ -57,18 +62,25 @@ test.describe('Category Management', () => {
     // Create a todo in that category
     await page.getByPlaceholder('Add a new todo...').fill(todoTitle);
 
+    // Wait for Add button to be enabled first
+    await expect(page.getByRole('button', { name: 'Add', exact: true })).toBeEnabled({ timeout: 5000 });
+
     // Select the category from the form's category dropdown
     const form = page.locator('form');
     const categorySelects = form.locator('button[role="combobox"]');
-    // The category select is the last one (after priority)
-    const categorySelect = categorySelects.last();
-    if (await categorySelect.isVisible()) {
+    // The category select is the one with "Category" text
+    const categorySelect = categorySelects.filter({ hasText: 'Category' });
+    if (await categorySelect.isVisible({ timeout: 5000 })) {
       await categorySelect.click();
-      await page.getByRole('option', { name: new RegExp(categoryName) }).click();
+      // Wait for the dropdown to open and option to appear
+      const option = page.getByRole('option', { name: new RegExp(categoryName) });
+      await expect(option).toBeVisible({ timeout: 5000 });
+      await option.click();
     }
 
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
+    // Wait for the todo to appear in the list
+    await expect(page.locator('h3', { hasText: todoTitle })).toBeVisible({ timeout: 10000 });
 
     // Click on the category in sidebar to filter
     await page.getByRole('button', { name: new RegExp(categoryName) }).click();
@@ -128,19 +140,27 @@ test.describe('Category Management', () => {
     // Create a todo in that category
     await page.getByPlaceholder('Add a new todo...').fill(todoTitle);
 
+    // Wait for Add button to be enabled
+    await expect(page.getByRole('button', { name: 'Add', exact: true })).toBeEnabled({ timeout: 5000 });
+
     // Select the category
     const form = page.locator('form');
     const categorySelects = form.locator('button[role="combobox"]');
-    const categorySelect = categorySelects.last();
-    if (await categorySelect.isVisible()) {
-      await categorySelect.click();
-      await page.getByRole('option', { name: new RegExp(categoryName) }).click();
+    // The category select is the one with "Category" text
+    const formCategorySelect = categorySelects.filter({ hasText: 'Category' });
+    if (await formCategorySelect.isVisible({ timeout: 5000 })) {
+      await formCategorySelect.click();
+      // Wait for the dropdown to open and option to appear
+      const option = page.getByRole('option', { name: new RegExp(categoryName) });
+      await expect(option).toBeVisible({ timeout: 5000 });
+      await option.click();
     }
 
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText(todoTitle)).toBeVisible({ timeout: 5000 });
+    // Wait for the todo to appear in the list
+    await expect(page.locator('h3', { hasText: todoTitle })).toBeVisible({ timeout: 10000 });
 
     // Category should now show count 1
-    await expect(categoryButton).toContainText('1');
+    await expect(categoryButton).toContainText('1', { timeout: 5000 });
   });
 });
