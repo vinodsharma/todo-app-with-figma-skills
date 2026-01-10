@@ -311,4 +311,169 @@ describe('TodoItem', () => {
       unmount();
     }
   });
+
+  describe('Archive functionality', () => {
+    const mockOnArchive = vi.fn();
+    const mockOnRestore = vi.fn();
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('should show Archive menu item when onArchive prop is provided', async () => {
+      const user = userEvent.setup();
+      render(
+        <TodoItem
+          todo={mockTodo}
+          onToggle={mockOnToggle}
+          onEdit={mockOnEdit}
+          onDelete={mockOnDelete}
+          onArchive={mockOnArchive}
+        />
+      );
+
+      const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+      await user.click(menuButton);
+
+      const archiveItem = await screen.findByRole('menuitem', { name: /archive/i });
+      expect(archiveItem).toBeInTheDocument();
+    });
+
+    it('should not show Archive menu item when onArchive prop is not provided', async () => {
+      const user = userEvent.setup();
+      render(
+        <TodoItem
+          todo={mockTodo}
+          onToggle={mockOnToggle}
+          onEdit={mockOnEdit}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+      await user.click(menuButton);
+
+      // Wait for menu to be open
+      await screen.findByRole('menuitem', { name: /edit/i });
+
+      const archiveItem = screen.queryByRole('menuitem', { name: /archive/i });
+      expect(archiveItem).not.toBeInTheDocument();
+    });
+
+    it('should show Restore menu item when isArchived is true and onRestore is provided', async () => {
+      const user = userEvent.setup();
+      render(
+        <TodoItem
+          todo={mockTodo}
+          isArchived={true}
+          onToggle={mockOnToggle}
+          onEdit={mockOnEdit}
+          onDelete={mockOnDelete}
+          onRestore={mockOnRestore}
+        />
+      );
+
+      const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+      await user.click(menuButton);
+
+      const restoreItem = await screen.findByRole('menuitem', { name: /restore/i });
+      expect(restoreItem).toBeInTheDocument();
+    });
+
+    it('should call onArchive when Archive menu item is clicked', async () => {
+      const user = userEvent.setup();
+      render(
+        <TodoItem
+          todo={mockTodo}
+          onToggle={mockOnToggle}
+          onEdit={mockOnEdit}
+          onDelete={mockOnDelete}
+          onArchive={mockOnArchive}
+        />
+      );
+
+      const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+      await user.click(menuButton);
+
+      const archiveItem = await screen.findByRole('menuitem', { name: /archive/i });
+      await user.click(archiveItem);
+
+      expect(mockOnArchive).toHaveBeenCalledWith('todo-1');
+    });
+
+    it('should call onRestore when Restore menu item is clicked', async () => {
+      const user = userEvent.setup();
+      render(
+        <TodoItem
+          todo={mockTodo}
+          isArchived={true}
+          onToggle={mockOnToggle}
+          onEdit={mockOnEdit}
+          onDelete={mockOnDelete}
+          onRestore={mockOnRestore}
+        />
+      );
+
+      const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+      await user.click(menuButton);
+
+      const restoreItem = await screen.findByRole('menuitem', { name: /restore/i });
+      await user.click(restoreItem);
+
+      expect(mockOnRestore).toHaveBeenCalledWith('todo-1');
+    });
+
+    it('should show "Delete Permanently" text when isArchived is true', async () => {
+      const user = userEvent.setup();
+      render(
+        <TodoItem
+          todo={mockTodo}
+          isArchived={true}
+          onToggle={mockOnToggle}
+          onEdit={mockOnEdit}
+          onDelete={mockOnDelete}
+          onRestore={mockOnRestore}
+        />
+      );
+
+      const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+      await user.click(menuButton);
+
+      const deleteItem = await screen.findByRole('menuitem', { name: /delete permanently/i });
+      expect(deleteItem).toBeInTheDocument();
+    });
+
+    it('should hide Edit, Archive, Skip, and Stop menu items when isArchived is true', async () => {
+      const user = userEvent.setup();
+      const mockOnSkipRecurrence = vi.fn();
+      const mockOnStopRecurrence = vi.fn();
+      const recurringTodo = { ...mockTodo, recurrenceRule: 'FREQ=DAILY' };
+
+      render(
+        <TodoItem
+          todo={recurringTodo}
+          isArchived={true}
+          onToggle={mockOnToggle}
+          onEdit={mockOnEdit}
+          onDelete={mockOnDelete}
+          onArchive={mockOnArchive}
+          onRestore={mockOnRestore}
+          onSkipRecurrence={mockOnSkipRecurrence}
+          onStopRecurrence={mockOnStopRecurrence}
+        />
+      );
+
+      const menuButton = screen.getByLabelText('Actions for "Test Todo"');
+      await user.click(menuButton);
+
+      // Wait for menu to open
+      await screen.findByRole('menuitem', { name: /restore/i });
+
+      // These should not be present when archived
+      expect(screen.queryByRole('menuitem', { name: /edit/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /archive/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /skip this occurrence/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /stop repeating/i })).not.toBeInTheDocument();
+    });
+  });
 });
