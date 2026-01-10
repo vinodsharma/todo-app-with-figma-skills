@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
     const dueDate = searchParams.get('dueDate');
+    const archived = searchParams.get('archived');
     const sortBy = searchParams.get('sortBy') as SortField | null;
     const sortDirection = (searchParams.get('sortDirection') || 'desc') as SortDirection;
 
@@ -40,11 +41,19 @@ export async function GET(request: Request) {
       completed?: boolean;
       priority?: Priority;
       title?: { contains: string; mode: 'insensitive' };
+      archivedAt?: null | { not: null };
       AND?: Array<Record<string, unknown>>;
     } = {
       userId: session.user.id,
       parentId: null,  // Only fetch top-level todos
     };
+
+    // Archive filter - by default show only non-archived todos
+    if (archived === 'true') {
+      where.archivedAt = { not: null };
+    } else {
+      where.archivedAt = null;
+    }
 
     // Search filter - case-insensitive title search
     if (search && search.trim()) {
