@@ -2,11 +2,29 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import type { Todo, CreateTodoInput, UpdateTodoInput, TodoQueryParams } from '@/types';
+import type { Todo, CreateTodoInput, UpdateTodoInput, TodoQueryParams, Priority } from '@/types';
 
 interface UseTodosOptions {
   filters?: TodoQueryParams;
   enabled?: boolean; // Whether to fetch (default: true)
+}
+
+interface BulkCompleteResult {
+  updated: number;
+}
+
+interface BulkDeleteResult {
+  deleted: number;
+  deletedTodos: Todo[];
+}
+
+interface BulkUpdateResult {
+  updated: number;
+}
+
+interface BulkUpdateData {
+  categoryId?: string | null;
+  priority?: Priority;
 }
 
 interface UseTodosReturn {
@@ -19,6 +37,9 @@ interface UseTodosReturn {
   skipRecurrence: (id: string) => Promise<void>;
   stopRecurrence: (id: string) => Promise<void>;
   reorderTodo: (todoId: string, newSortOrder: number, newCategoryId?: string) => Promise<void>;
+  bulkComplete: (ids: string[], completed: boolean) => Promise<BulkCompleteResult>;
+  bulkDelete: (ids: string[]) => Promise<BulkDeleteResult>;
+  bulkUpdate: (ids: string[], data: BulkUpdateData) => Promise<BulkUpdateResult>;
   refetch: () => Promise<void>;
 }
 
@@ -245,6 +266,84 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     }
   };
 
+  const bulkComplete = async (ids: string[], completed: boolean): Promise<BulkCompleteResult> => {
+    try {
+      const response = await fetch('/api/todos/bulk-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, completed }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to bulk complete todos');
+      }
+
+      const data = await response.json();
+      await fetchTodos();
+      toast.success(`${data.updated} todo(s) ${completed ? 'completed' : 'uncompleted'}`);
+      return data;
+    } catch (error) {
+      toast.error('Failed to bulk complete todos');
+      console.error('Error bulk completing todos:', error);
+      throw error;
+    }
+  };
+
+  const bulkDelete = async (ids: string[]): Promise<BulkDeleteResult> => {
+    try {
+      const response = await fetch('/api/todos/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to bulk delete todos');
+      }
+
+      const data = await response.json();
+      await fetchTodos();
+      toast.success(`${data.deleted} todo(s) deleted`);
+      return data;
+    } catch (error) {
+      toast.error('Failed to bulk delete todos');
+      console.error('Error bulk deleting todos:', error);
+      throw error;
+    }
+  };
+
+  const bulkUpdate = async (ids: string[], data: BulkUpdateData): Promise<BulkUpdateResult> => {
+    try {
+      const response = await fetch('/api/todos/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, ...data }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to bulk update todos');
+      }
+
+      const result = await response.json();
+      await fetchTodos();
+
+      // Determine appropriate toast message
+      if (data.priority !== undefined) {
+        toast.success(`${result.updated} todo(s) priority updated`);
+      } else if (data.categoryId !== undefined) {
+        toast.success(`${result.updated} todo(s) moved`);
+      } else {
+        toast.success(`${result.updated} todo(s) updated`);
+      }
+
+      return result;
+    } catch (error) {
+      toast.error('Failed to bulk update todos');
+      console.error('Error bulk updating todos:', error);
+      throw error;
+    }
+  };
+
   return {
     todos,
     isLoading,
@@ -255,6 +354,9 @@ export function useTodos(filtersOrOptions?: TodoQueryParams | UseTodosOptions): 
     skipRecurrence,
     stopRecurrence,
     reorderTodo,
+    bulkComplete,
+    bulkDelete,
+    bulkUpdate,
     refetch: fetchTodos,
   };
 }
