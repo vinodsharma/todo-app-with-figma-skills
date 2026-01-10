@@ -1,9 +1,17 @@
 import { test, expect, uniqueTitle } from './fixtures';
 
 test.describe('Bulk Operations', () => {
+  // Increase timeout for all tests in this suite since they involve:
+  // - Page load and auth (up to 15s)
+  // - Todo creation and API calls
+  // - UI interactions with waits
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, authenticatedPage }) => {
     // authenticatedPage fixture handles login
     await page.goto('/');
+    // Wait for the page to fully load - Select button indicates the app is ready
+    await expect(page.getByRole('button', { name: 'Select', exact: true })).toBeVisible({ timeout: 15000 });
   });
 
   // Helper to find the selection checkbox for a todo by its exact title
@@ -60,11 +68,15 @@ test.describe('Bulk Operations', () => {
     // Create a todo first
     const title = uniqueTitle('Bulk Test');
     await page.getByPlaceholder('Add a new todo...').fill(title);
+    // Wait for Add button to be enabled
+    await expect(page.getByRole('button', { name: 'Add', exact: true })).toBeEnabled({ timeout: 5000 });
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
+    // Wait for the todo to appear and UI to settle
+    await expect(page.locator('h3', { hasText: title })).toBeVisible({ timeout: 10000 });
 
     // Enter selection mode
     const selectButton = page.getByRole('button', { name: 'Select', exact: true });
+    await expect(selectButton).toBeVisible({ timeout: 5000 });
     await selectButton.click();
 
     // Wait for selection mode to be active
@@ -86,11 +98,16 @@ test.describe('Bulk Operations', () => {
     // Create a todo
     const title = uniqueTitle('Bulk Complete Test');
     await page.getByPlaceholder('Add a new todo...').fill(title);
+    // Wait for Add button to be enabled
+    await expect(page.getByRole('button', { name: 'Add', exact: true })).toBeEnabled({ timeout: 5000 });
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
+    // Wait for the todo to appear and UI to settle
+    await expect(page.locator('h3', { hasText: title })).toBeVisible({ timeout: 10000 });
 
     // Enter selection mode
-    await page.getByRole('button', { name: 'Select', exact: true }).click();
+    const selectButton = page.getByRole('button', { name: 'Select', exact: true });
+    await expect(selectButton).toBeVisible({ timeout: 5000 });
+    await selectButton.click();
     await expect(page.getByRole('button', { name: 'Done', exact: true })).toBeVisible();
 
     // Select the todo using its selection checkbox
@@ -114,11 +131,16 @@ test.describe('Bulk Operations', () => {
     // Create a todo
     const title = uniqueTitle('Delete Confirm');
     await page.getByPlaceholder('Add a new todo...').fill(title);
+    // Wait for Add button to be enabled
+    await expect(page.getByRole('button', { name: 'Add', exact: true })).toBeEnabled({ timeout: 5000 });
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
+    // Wait for the todo to appear and UI to settle
+    await expect(page.locator('h3', { hasText: title })).toBeVisible({ timeout: 10000 });
 
     // Enter selection mode
-    await page.getByRole('button', { name: 'Select', exact: true }).click();
+    const selectButton = page.getByRole('button', { name: 'Select', exact: true });
+    await expect(selectButton).toBeVisible({ timeout: 5000 });
+    await selectButton.click();
     await expect(page.getByRole('button', { name: 'Done', exact: true })).toBeVisible();
 
     // Select the todo
