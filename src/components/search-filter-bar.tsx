@@ -29,6 +29,11 @@ interface SearchFilterBarProps {
   onSortChange?: (sort: SortOption) => void;
   viewMode?: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
+  isSelectionMode?: boolean;
+  onSelectionModeChange?: (mode: boolean) => void;
+  selectedCount?: number;
+  onSelectAll?: () => void;
+  onDeselectAll?: () => void;
   className?: string;
 }
 
@@ -58,6 +63,11 @@ export function SearchFilterBar({
   onSortChange,
   viewMode,
   onViewModeChange,
+  isSelectionMode = false,
+  onSelectionModeChange,
+  selectedCount = 0,
+  onSelectAll,
+  onDeselectAll,
   className,
 }: SearchFilterBarProps) {
   const hasActiveFilters =
@@ -235,6 +245,53 @@ export function SearchFilterBar({
                   <CalendarDays className="h-4 w-4" />
                 </Button>
               </div>
+            </>
+          )}
+
+          {/* Selection Mode Toggle */}
+          {onSelectionModeChange && (
+            <>
+              <div className="hidden sm:block h-6 w-px bg-border" />
+              {!isSelectionMode ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onSelectionModeChange(true)}
+                  className="h-9"
+                >
+                  Select
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {selectedCount > 0 ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onDeselectAll}
+                      className="h-9"
+                    >
+                      Deselect All
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onSelectAll}
+                      className="h-9"
+                    >
+                      Select All
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onSelectionModeChange(false)}
+                    className="h-9"
+                  >
+                    Done
+                  </Button>
+                </div>
+              )}
             </>
           )}
 
