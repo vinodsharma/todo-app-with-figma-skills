@@ -1,7 +1,7 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { Plus, Pencil, Trash2, Check, X, Settings, FolderOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, Settings, FolderOpen, Archive, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ActivityLog, ActionType, EntityType } from '@/types/activity';
 
@@ -11,6 +11,8 @@ const actionIcons: Record<ActionType, React.ReactNode> = {
   DELETE: <Trash2 className="h-4 w-4" />,
   COMPLETE: <Check className="h-4 w-4" />,
   UNCOMPLETE: <X className="h-4 w-4" />,
+  ARCHIVE: <Archive className="h-4 w-4" />,
+  RESTORE: <RotateCcw className="h-4 w-4" />,
 };
 
 const actionColors: Record<ActionType, string> = {
@@ -19,6 +21,8 @@ const actionColors: Record<ActionType, string> = {
   DELETE: 'text-red-600 bg-red-100 dark:bg-red-900/30',
   COMPLETE: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30',
   UNCOMPLETE: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30',
+  ARCHIVE: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30',
+  RESTORE: 'text-green-600 bg-green-100 dark:bg-green-900/30',
 };
 
 const entityIcons: Record<EntityType, React.ReactNode> = {
@@ -33,6 +37,8 @@ const actionLabels: Record<ActionType, string> = {
   DELETE: 'Deleted',
   COMPLETE: 'Completed',
   UNCOMPLETE: 'Uncompleted',
+  ARCHIVE: 'Archived',
+  RESTORE: 'Restored',
 };
 
 interface ActivityItemProps {
