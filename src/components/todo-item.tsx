@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, FileText, Repeat, MoreHorizontal, SkipForward, Ban } from "lucide-react";
+import { Calendar, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, FileText, Repeat, MoreHorizontal, SkipForward, Ban, Archive, RotateCcw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,9 +19,12 @@ import { AddSubtaskInput } from "./add-subtask-input";
 
 interface TodoItemProps {
   todo: Todo;
+  isArchived?: boolean;
   onToggle: (id: string) => Promise<void>;
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => Promise<void>;
+  onArchive?: (id: string) => Promise<void>;
+  onRestore?: (id: string) => Promise<void>;
   onAddSubtask?: (parentId: string, title: string) => Promise<void>;
   onSkipRecurrence?: (id: string) => Promise<void>;
   onStopRecurrence?: (id: string) => Promise<void>;
@@ -45,7 +48,7 @@ const priorityConfig: Record<Priority, { label: string; className: string }> = {
   },
 };
 
-export function TodoItem({ todo, onToggle, onEdit, onDelete, onAddSubtask, onSkipRecurrence, onStopRecurrence, isSelected = false }: TodoItemProps) {
+export function TodoItem({ todo, isArchived = false, onToggle, onEdit, onDelete, onArchive, onRestore, onAddSubtask, onSkipRecurrence, onStopRecurrence, isSelected = false }: TodoItemProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isSubtasksExpanded, setIsSubtasksExpanded] = useState(false);
 
@@ -123,29 +126,55 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete, onAddSubtask, onSki
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(todo)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                {todo.recurrenceRule && onSkipRecurrence && (
-                  <DropdownMenuItem onClick={() => onSkipRecurrence(todo.id)}>
-                    <SkipForward className="mr-2 h-4 w-4" />
-                    Skip this occurrence
-                  </DropdownMenuItem>
+                {!isArchived ? (
+                  <>
+                    <DropdownMenuItem onClick={() => onEdit(todo)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    {todo.recurrenceRule && onSkipRecurrence && (
+                      <DropdownMenuItem onClick={() => onSkipRecurrence(todo.id)}>
+                        <SkipForward className="mr-2 h-4 w-4" />
+                        Skip this occurrence
+                      </DropdownMenuItem>
+                    )}
+                    {todo.recurrenceRule && onStopRecurrence && (
+                      <DropdownMenuItem onClick={() => onStopRecurrence(todo.id)}>
+                        <Ban className="mr-2 h-4 w-4" />
+                        Stop repeating
+                      </DropdownMenuItem>
+                    )}
+                    {onArchive && (
+                      <DropdownMenuItem onClick={() => onArchive(todo.id)}>
+                        <Archive className="mr-2 h-4 w-4" />
+                        Archive
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => onDelete(todo.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    {onRestore && (
+                      <DropdownMenuItem onClick={() => onRestore(todo.id)}>
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Restore
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => onDelete(todo.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Permanently
+                    </DropdownMenuItem>
+                  </>
                 )}
-                {todo.recurrenceRule && onStopRecurrence && (
-                  <DropdownMenuItem onClick={() => onStopRecurrence(todo.id)}>
-                    <Ban className="mr-2 h-4 w-4" />
-                    Stop repeating
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onClick={() => onDelete(todo.id)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
