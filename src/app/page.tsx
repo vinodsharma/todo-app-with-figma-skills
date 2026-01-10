@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Header } from '@/components/header';
 import { CategorySidebar } from '@/components/category-sidebar';
 import { ActivitySidebar } from '@/components/activity';
@@ -11,12 +11,14 @@ import { EditTodoDialog } from '@/components/edit-todo-dialog';
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
 import { DndProvider } from '@/components/dnd';
 import { CalendarView } from '@/components/calendar';
+import { BulkActionBar, DeleteConfirmDialog } from '@/components/bulk-actions';
 import { useTodos } from '@/hooks/use-todos';
 import { useCategories } from '@/hooks/use-categories';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useSortPreference } from '@/hooks/use-sort-preference';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { useViewPreference } from '@/hooks/use-view-preference';
+import { useSelection } from '@/hooks/use-selection';
 import { Priority, Todo, TodoQueryParams } from '@/types';
 
 export default function Home() {
@@ -24,8 +26,10 @@ export default function Home() {
   const [filters, setFilters] = useState<SearchBarFilters>(defaultFilters);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { sortOption, setSortOption, isLoaded: sortLoaded } = useSortPreference();
   const { viewMode, setViewMode, calendarView, setCalendarView } = useViewPreference();
+  const selection = useSelection();
 
   // Debounce search to avoid too many API calls
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -59,10 +63,13 @@ export default function Home() {
 
   const { categories, createCategory: createCategoryHook, deleteCategory, reorderCategory, refetch: refetchCategories } = useCategories();
   // Wait for sort preference to load before fetching todos to avoid race condition
-  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, skipRecurrence, stopRecurrence, reorderTodo, refetch: fetchTodos } = useTodos({
+  const { todos, isLoading, createTodo, updateTodo, toggleTodo, deleteTodo, skipRecurrence, stopRecurrence, reorderTodo, bulkComplete, bulkDelete, bulkUpdate, refetch: fetchTodos } = useTodos({
     filters: queryParams,
     enabled: sortLoaded,
   });
+
+  // Memoized list of all todo IDs for selection
+  const allTodoIds = useMemo(() => todos.map(t => t.id), [todos]);
 
   // Check if any filters are active (for showing appropriate empty state)
   const hasActiveFilters = !!(
@@ -168,6 +175,54 @@ export default function Home() {
     await reorderCategory(categoryId, newIndex);
   };
 
+  // Selection handlers for bulk operations
+  const handleSelectionChange = useCallback((id: string, e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      selection.selectRange(id, allTodoIds);
+    } else {
+      selection.toggleSelection(id, e.shiftKey, e.ctrlKey || e.metaKey);
+    }
+  }, [selection, allTodoIds]);
+
+  const handleBulkComplete = useCallback(async () => {
+    const ids = Array.from(selection.selectedIds);
+    await bulkComplete(ids, true);
+    selection.deselectAll();
+    await refetchCategories();
+  }, [selection, bulkComplete, refetchCategories]);
+
+  const handleBulkDelete = useCallback(async () => {
+    const ids = Array.from(selection.selectedIds);
+    await bulkDelete(ids);
+    selection.deselectAll();
+    setShowDeleteConfirm(false);
+    await refetchCategories();
+  }, [selection, bulkDelete, refetchCategories]);
+
+  const handleBulkMoveToCategory = useCallback(async (categoryId: string | null) => {
+    const ids = Array.from(selection.selectedIds);
+    await bulkUpdate(ids, { categoryId });
+    selection.deselectAll();
+    await refetchCategories();
+  }, [selection, bulkUpdate, refetchCategories]);
+
+  const handleBulkChangePriority = useCallback(async (priority: Priority) => {
+    const ids = Array.from(selection.selectedIds);
+    await bulkUpdate(ids, { priority });
+    selection.deselectAll();
+  }, [selection, bulkUpdate]);
+
+  // Escape key handler to exit selection mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selection.isSelectionMode) {
+        selection.exitSelectionMode();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selection]);
+
   return (
     <DndProvider
       onTodoReorder={handleReorderTodo}
@@ -199,6 +254,11 @@ export default function Home() {
               onSortChange={setSortOption}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
+              isSelectionMode={selection.isSelectionMode}
+              onSelectionModeChange={(mode) => mode ? selection.enterSelectionMode() : selection.exitSelectionMode()}
+              selectedCount={selection.selectedCount}
+              onSelectAll={() => selection.selectAll(allTodoIds)}
+              onDeselectAll={selection.deselectAll}
             />
             {viewMode === 'list' ? (
               <TodoList
@@ -207,6 +267,9 @@ export default function Home() {
                 isLoading={isLoading}
                 hasActiveFilters={hasActiveFilters}
                 selectedIndex={selectedIndex}
+                isSelectionMode={selection.isSelectionMode}
+                selectedIds={selection.selectedIds}
+                onSelectionChange={handleSelectionChange}
                 onToggle={handleToggleTodo}
                 onEdit={handleEditTodo}
                 onEditClick={handleEditClick}
@@ -246,6 +309,27 @@ export default function Home() {
 
         {/* Keyboard Shortcuts Help Dialog (triggered by '?') */}
         <KeyboardShortcutsDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
+
+        {/* Bulk Action Bar (visible in selection mode) */}
+        {selection.isSelectionMode && (
+          <BulkActionBar
+            selectedCount={selection.selectedCount}
+            onComplete={handleBulkComplete}
+            onDelete={() => setShowDeleteConfirm(true)}
+            onMoveToCategory={handleBulkMoveToCategory}
+            onChangePriority={handleBulkChangePriority}
+            onClose={selection.exitSelectionMode}
+            categories={categories}
+          />
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          count={selection.selectedCount}
+          onConfirm={handleBulkDelete}
+        />
       </div>
     </DndProvider>
   );
