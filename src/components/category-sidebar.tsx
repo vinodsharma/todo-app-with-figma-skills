@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils"
 interface CategorySidebarProps {
   categories: Category[]
   selectedCategoryId: string | null
-  isArchiveView: boolean
-  archivedCount: number
+  isArchiveView?: boolean
+  archivedCount?: number
   onSelectCategory: (categoryId: string | null) => void
-  onSelectArchive: () => void
+  onSelectArchive?: () => void
   onAddCategory: (name: string, color: string) => Promise<void>
   onDeleteCategory: (categoryId: string) => Promise<void>
 }
@@ -23,8 +23,8 @@ interface CategorySidebarProps {
 export function CategorySidebar({
   categories,
   selectedCategoryId,
-  isArchiveView,
-  archivedCount,
+  isArchiveView = false,
+  archivedCount = 0,
   onSelectCategory,
   onSelectArchive,
   onAddCategory,
@@ -99,20 +99,22 @@ export function CategorySidebar({
       </div>
 
       {/* Archive Section */}
-      <div className="mt-auto pt-2 border-t">
-        <Button
-          variant={isArchiveView ? "secondary" : "ghost"}
-          className={cn(
-            "w-full justify-start gap-2",
-            isArchiveView && "bg-secondary"
-          )}
-          onClick={onSelectArchive}
-        >
-          <Archive className="size-4" />
-          <span className="flex-1 text-left">Archived</span>
-          <span className="text-xs text-muted-foreground">{archivedCount}</span>
-        </Button>
-      </div>
+      {onSelectArchive && (
+        <div className="mt-auto pt-2 border-t">
+          <Button
+            variant={isArchiveView ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-2",
+              isArchiveView && "bg-secondary"
+            )}
+            onClick={onSelectArchive}
+          >
+            <Archive className="size-4" />
+            <span className="flex-1 text-left">Archived</span>
+            <span className="text-xs text-muted-foreground">{archivedCount}</span>
+          </Button>
+        </div>
+      )}
 
       {/* Add Category Dialog */}
       <div className="pt-2">
