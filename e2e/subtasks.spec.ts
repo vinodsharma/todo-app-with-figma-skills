@@ -185,16 +185,19 @@ test.describe('Subtasks', () => {
     // Add subtask using helper
     await addSubtask(page, todoCard, subtaskTitle);
 
-    // Now delete the parent todo by hovering and clicking delete
+    // Now delete the parent todo using the dropdown menu
     await todoCard.hover();
-    const deleteButton = todoCard.locator('button[aria-label^="Delete "]').first();
-    await deleteButton.click();
+    const actionsButton = todoCard.getByRole('button', { name: /actions for/i });
+    await actionsButton.click();
+
+    // Click delete in dropdown
+    await page.getByRole('menuitem', { name: /delete/i }).click();
 
     // Verify parent is gone
     await expect(page.locator('h3', { hasText: parentTitle })).not.toBeVisible({ timeout: 5000 });
 
     // Verify subtask is also gone (cascade delete)
-    await expect(page.getByText(subtaskTitle)).not.toBeVisible();
+    await expect(page.getByText(subtaskTitle)).not.toBeVisible({ timeout: 5000 });
   });
 
   test('can add multiple subtasks and track progress', async ({ page }) => {
