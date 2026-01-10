@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { List } from "lucide-react"
+import { List, Archive } from "lucide-react"
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Category } from "@/types"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,10 @@ import { cn } from "@/lib/utils"
 interface CategorySidebarProps {
   categories: Category[]
   selectedCategoryId: string | null
+  isArchiveView: boolean
+  archivedCount: number
   onSelectCategory: (categoryId: string | null) => void
+  onSelectArchive: () => void
   onAddCategory: (name: string, color: string) => Promise<void>
   onDeleteCategory: (categoryId: string) => Promise<void>
 }
@@ -20,7 +23,10 @@ interface CategorySidebarProps {
 export function CategorySidebar({
   categories,
   selectedCategoryId,
+  isArchiveView,
+  archivedCount,
   onSelectCategory,
+  onSelectArchive,
   onAddCategory,
   onDeleteCategory,
 }: CategorySidebarProps) {
@@ -58,10 +64,10 @@ export function CategorySidebar({
 
       {/* All Todos Button */}
       <Button
-        variant={selectedCategoryId === null ? "secondary" : "ghost"}
+        variant={selectedCategoryId === null && !isArchiveView ? "secondary" : "ghost"}
         className={cn(
           "w-full justify-start gap-2",
-          selectedCategoryId === null && "bg-secondary"
+          selectedCategoryId === null && !isArchiveView && "bg-secondary"
         )}
         onClick={() => onSelectCategory(null)}
       >
@@ -92,8 +98,24 @@ export function CategorySidebar({
         </SortableContext>
       </div>
 
-      {/* Add Category Dialog */}
+      {/* Archive Section */}
       <div className="mt-auto pt-2 border-t">
+        <Button
+          variant={isArchiveView ? "secondary" : "ghost"}
+          className={cn(
+            "w-full justify-start gap-2",
+            isArchiveView && "bg-secondary"
+          )}
+          onClick={onSelectArchive}
+        >
+          <Archive className="size-4" />
+          <span className="flex-1 text-left">Archived</span>
+          <span className="text-xs text-muted-foreground">{archivedCount}</span>
+        </Button>
+      </div>
+
+      {/* Add Category Dialog */}
+      <div className="pt-2">
         <AddCategoryDialog onAdd={onAddCategory} />
       </div>
     </div>
