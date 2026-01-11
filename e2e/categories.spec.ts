@@ -52,10 +52,16 @@ test.describe('Category Management', () => {
     const categoryName = `Filter Category ${Date.now()}`;
     const todoTitle = `Category Todo ${Date.now()}`;
 
-    // Create a category
+    // Create a category and wait for categories API to refresh
     await page.getByRole('button', { name: /add category/i }).click();
     await page.getByLabel(/name/i).fill(categoryName);
-    await page.getByRole('dialog').getByRole('button', { name: /add category/i }).click();
+
+    // Wait for both the dialog submit and the subsequent categories refetch
+    const [categoryResponse] = await Promise.all([
+      page.waitForResponse(resp => resp.url().includes('/api/categories') && resp.status() === 200),
+      page.getByRole('dialog').getByRole('button', { name: /add category/i }).click(),
+    ]);
+
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
     await expect(page.getByRole('button', { name: new RegExp(categoryName) })).toBeVisible({ timeout: 5000 });
 
@@ -126,10 +132,16 @@ test.describe('Category Management', () => {
     const categoryName = `Count Category ${Date.now()}`;
     const todoTitle = `Count Todo ${Date.now()}`;
 
-    // Create a category
+    // Create a category and wait for categories API to refresh
     await page.getByRole('button', { name: /add category/i }).click();
     await page.getByLabel(/name/i).fill(categoryName);
-    await page.getByRole('dialog').getByRole('button', { name: /add category/i }).click();
+
+    // Wait for both the dialog submit and the subsequent categories refetch
+    const [categoryResponse] = await Promise.all([
+      page.waitForResponse(resp => resp.url().includes('/api/categories') && resp.status() === 200),
+      page.getByRole('dialog').getByRole('button', { name: /add category/i }).click(),
+    ]);
+
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 });
     await expect(page.getByRole('button', { name: new RegExp(categoryName) })).toBeVisible({ timeout: 5000 });
 
