@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication', () => {
-  test('should show login page when not authenticated', async ({ page }) => {
-    await page.goto('/');
+  test('should redirect to login when accessing dashboard unauthenticated', async ({ page }) => {
+    await page.goto('/dashboard');
 
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/);

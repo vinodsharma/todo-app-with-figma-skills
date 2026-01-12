@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -44,7 +45,9 @@ export function Header({ onActivityToggle, isActivityOpen }: HeaderProps) {
   return (
     <header className="border-b bg-background">
       <div className="flex h-16 items-center justify-between px-6">
-        <h1 className="text-xl font-semibold">Todo App</h1>
+        <Link href="/dashboard" className="text-xl font-semibold">
+          Todo App
+        </Link>
 
         <div className="flex items-center gap-2">
           <Button
