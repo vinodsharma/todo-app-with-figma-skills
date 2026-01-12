@@ -123,3 +123,71 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .container {
+    @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl;
+  }
+}
+
+/* Landing page visual effects */
+@layer utilities {
+  /* Gradient text effect */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, var(--foreground) 0%, var(--foreground) 40%, oklch(0.6 0 0) 100%);
+  }
+
+  .dark .text-gradient {
+    background-image: linear-gradient(to right, white 0%, white 40%, oklch(0.7 0 0) 100%);
+  }
+
+  /* Glow effect for screenshots */
+  .screenshot-glow {
+    @apply relative;
+  }
+
+  .screenshot-glow::before {
+    content: '';
+    @apply absolute -inset-4 rounded-2xl opacity-20 blur-2xl;
+    background: radial-gradient(ellipse at center, oklch(0.5 0 0) 0%, transparent 70%);
+  }
+
+  .dark .screenshot-glow::before {
+    @apply opacity-40;
+    background: radial-gradient(ellipse at center, oklch(0.4 0 0) 0%, transparent 70%);
+  }
+
+  /* Subtle grid background */
+  .bg-grid {
+    background-image: linear-gradient(to right, oklch(0.9 0 0) 1px, transparent 1px),
+                      linear-gradient(to bottom, oklch(0.9 0 0) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .dark .bg-grid {
+    background-image: linear-gradient(to right, oklch(0.2 0 0) 1px, transparent 1px),
+                      linear-gradient(to bottom, oklch(0.2 0 0) 1px, transparent 1px);
+  }
+
+  /* Gradient border effect */
+  .gradient-border {
+    @apply relative;
+  }
+
+  .gradient-border::before {
+    content: '';
+    @apply absolute -inset-px rounded-xl;
+    background: linear-gradient(to bottom right, oklch(0.8 0 0), oklch(0.95 0 0));
+    z-index: -1;
+  }
+
+  .dark .gradient-border::before {
+    background: linear-gradient(to bottom right, oklch(0.35 0 0), oklch(0.2 0 0));
+  }
+
+  /* Fade mask for sections */
+  .fade-mask-b {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  }
+}
